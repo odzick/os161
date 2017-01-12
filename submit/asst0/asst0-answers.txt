@@ -1,0 +1,70 @@
+omar@omar-laptop:~/os161/root$ sys161 kernel
+sys161: System/161 release 2.0.3, compiled Jan 10 2017 11:29:57
+
+OS/161 base system version 1.99.08
+Copyright (c) 2000, 2001-2005, 2008-2011, 2013, 2014
+   President and Fellows of Harvard College.  All rights reserved.
+
+Put-your-group-name-here's system version 0 (DUMBVM #1)
+
+292k physical memory available
+Device probe...
+lamebus0 (system main bus)
+emu0 at lamebus0
+ltrace0 at lamebus0
+ltimer0 at lamebus0
+beep0 at ltimer0
+rtclock0 at ltimer0
+lrandom0 at lamebus0
+random0 at lrandom0
+lhd0 at lamebus0
+lhd1 at lamebus0
+lser0 at lamebus0
+con0 at lser0
+
+cpu0: MIPS/161 (System/161 2.x) features 0x0
+OS/161 kernel [? for menu]:
+
+omar@omar-laptop:~/os161/src$ git log
+commit 665ad52f9fa0b414ace21c8ada258dc911a9defd
+Author: Omar <odzick@gmail.com>
+Date:   Tue Jan 10 10:14:30 2017 -0800
+
+    Initial commit of os161 for CPEN331
+ 
+omar@omar-laptop:~/os161/src$ git tag
+asst0-start
+
+1. the first line of code that is excecuted when a trap occurs is the label mips_general_handler which is on line 86 in the file src/kern/mips/locore/exception-mips1.S. This then calls mips_trap kern/arch/mips/locore/trap.c. The function mips_trap then loads the exception code into the register fields and then calls the syscall handler (syscall). If it is an iterrupt, it calls the interrupt handler (mainbus_interrupt) and returns.
+
+2. System calls invoked by a user program is handled in the file build/userland/libc/syscall.S. Specifically, from line 55 to 59 the corresponding syscall number is loaded into v0 where the kernel expects to find it and jumps the the shared syscall code.
+
+3. This is because both the user and kernal need access to the libc functions (ex strcpy, and strlen). However, some libc functions are only needed in the context of a user and so are only in that directory. 
+
+4. You use the file to configure the location of the root of the installed system (OSTREE), and to turn on debug mode. The configuration may be invalidated if you want to run the OS on a different platform or machine, or if the location of your root directory changes. In this case the configure script must be re-run.
+
+5. A function is "machine dependent" if it is dependent on the specific structure of the hardware architecture, for instance functions for cache and exception handling. Keeping this seperation will allow machine independent code to be reused.
+
+6. (37 * 4) or 37 4 byte words. This is to account for the 37 registers in mips (excluding the zero register). the registers are listed in kern/arch/mips/trapframe.h from line 41 to 77. 
+
+7. You would re-run kern/conf/config to make changes to selected options and assignments for a given kernel build. For instance, if you wanted to add a new file to the kernel build you would have to run this script. 
+
+8. bmake depend should be run whenever a new header file is addded.  
+
+9. bmake install should be run everytime we want to re-install the kernel
+
+10. 
+1) Add a new function in the file kern/main/menu.c called cmd_hello_world. Here is where you write the code that would print out hello world to the command line
+
+2) Add the label "hello", cmd_hello_world into the cmdtable on line 530 in the file kern/main/menu.c 
+
+11. Since OS161 is being run on sys161 which is simulating mips hardware, we do not have access to the standard utilties on the machine we are running the OS on.
+
+12. The return value is lost. The exit code is placed in register a0 (userland/libc/stdlib/exit.c line 62).
+
+13.
+1) Add code for the new system call under the directory kern/syscall
+
+2) add a reference and call number for the new system call in kern/include/syscall.h
+
+3) add a new case under the switch file on line 102 in kern/arch/mips/syscall/syscall.c to handle the case when the syscall has the corresponding call number.   
