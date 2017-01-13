@@ -47,9 +47,9 @@ asst0-start
 
 6. (37 * 4) or 37 4 byte words. This is to account for the 37 registers in mips (excluding the zero register). the registers are listed in kern/arch/mips/trapframe.h from line 41 to 77. 
 
-7. You would re-run kern/conf/config to make changes to selected options and assignments for a given kernel build. For instance, if you wanted to add a new file to the kernel build you would have to run this script. 
+7. You would re-run kern/conf/config to make changes to selected options and assignments for a given kernel build. For instance, if you wanted to add a new config file to the kernel build you would have to run this script. 
 
-8. bmake depend should be run whenever a new header file is addded.  
+8. bmake depend should be run whenever you include a new header file is addded or after re-running config.  
 
 9. bmake install should be run everytime we want to re-install the kernel
 
@@ -60,7 +60,7 @@ asst0-start
 
 11. Since OS161 is being run on sys161 which is simulating mips hardware, we do not have access to the standard utilties on the machine we are running the OS on.
 
-12. The return value is lost. The exit code is placed in register a0 (userland/libc/stdlib/exit.c line 62).
+12. the return value is placed in a0 (the expected return register) and s0 (which it is saved in in case exit unexpectedly returns) userland/lib/crt0/mips/crt0.S.
 
 13.
 1) Add code for the new system call under the directory kern/syscall
