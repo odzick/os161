@@ -1,0 +1,38 @@
+1. __start in kern/arch/sys161/main/start.S.  
+
+2. addiu sp, sp, -24    
+
+3. 
+Num     Type        Disp Enb Address    What
+1       breakpoint     keep y   0x800139e4 in kmain at ../../main/main.c:211
+2       breakpoint     keep y   0x80014a0c in menu at ../../main/menu.c:697
+
+4. First, System/161 sets up the stack frame. Then it load the boot stack for the first processor at the top of physical memory, then it loads the kernel at  virtual address 0x80000200, which is
+(physical address 0x00000200).  Then the exception handler code is is copied into the first page of memory. Then it flushes the instruction cache, initializes the TLB, sets up the status register, and loads the cpu number (boot CPU is 0) into the PTBASE field of the context register. Finally, it loads the gp register, and then calls kmain.
+
+5. jal kmain
+
+6. 
+(gdb) list
+105         GROUP_VERSION, buildconfig, buildversion);
+106     kprintf("\n");
+107 
+108     /* Early initialization. */
+109     ram_bootstrap();
+110     proc_bootstrap();
+111     thread_bootstrap();
+112     hardclock_bootstrap();
+113     vfs_bootstrap();
+114     kheap_nextgeneration();
+
+7. (gdb) print bootcpu
+$1 = (struct cpu *) 0x80000
+
+8. $1 = (struct cpu *) 0x8003af00
+
+9. (gdb) print allcpus
+$1 = {arr = {v = 0x0, num = 0, max = 0}}
+
+10. (gdb) print allcpus
+$2 = {arr = {v = 0x80039fe0, num = 1, max = 4}}
+ 
