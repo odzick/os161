@@ -58,7 +58,7 @@ asst0-start
 
 2) Add the label "hello", cmd_hello_world into the cmdtable on line 530 in the file kern/main/menu.c 
 
-11. Since OS161 is being run on sys161 which is simulating mips hardware, we do not have access to the standard utilties on the machine we are running the OS on.
+11. Since OS161 is being run on sys161 which is simulating mips hardware, we do not have access to the standard utilties on our machine.
 
 12. the return value is placed in a0 (the expected return register) and s0 (which it is saved in in case exit unexpectedly returns) userland/lib/crt0/mips/crt0.S.
 
