@@ -1,0 +1,24 @@
+1. When thread_exit is called the thread first detaches from it's process(proc_remthread(cur)). Then we make sure our thread stack did not overflow(thread_checkstack). Finally, we turn interrupts off (splhigh()) and then swith tthe current thread into a zombie state (thread_switch(S_ZOMBIE, NULL, NULL)). Threads left in a zombie state do nothing and are later cleaned up by exorcise(); a function that destroys zombie threads on the cpu.
+
+wchan_sleep is called when a thread goes to sleep. This function changes the thread state to S_SLEEP.
+
+2. thread_switch(threadstat_t, struct wchan, struct spinlock) in kern/thread/thread.c handles context switching
+
+3.  S_RUN : thread is currently running
+    S_READY :  thread is ready to run
+    S_SLEEP : a thread is sleeping
+    S_ZOMBIE : thread has exited and has not yet been deleted
+
+4. To turn off interrupts means that both hardware and software interrpt's ISRs will not be executed, but instead will be queued for exectution after interrupts are turned back on. Interrupts are turned of by splhigh() which sets which sets IPL to it's highest value which turns off interrupts (kern/include/spl.h).  It is important to turn these off to avoid deadlocks and race conditions with other processes.
+
+5. wchan_wakeone(struct wchan, struct spinlock) gets called. The function calls thread_make_runnable which changes the thread state to S_READY. The thread that woke up the other thread continues running. After a thread has been woken up, it's state will be S_READY, and so it will begin to run once it is the head of the thread queue.  
+
+6. Normally schedule(), but it is currently not implemented so thread_switch does. 
+
+7. thread_switch picks the next thread by selecting the next S_READY thread from the front of the queue  
+
+8. ltimer_irq in kern/dev/lamebus/ltimer.c calls hardclock() which which after SCHEDULE_HARDCLOCKS iterations, calls schedule() which handles the thread switching.
+
+9. wchan_sleep is used to make a thread sleep while it is waiting for a lock to be released (P in kern/thread/synch.c). wchan_wakeone is then used to wake up threads when a lock has been released (V in kern/thread/synch.c).
+
+10. wait channels have an associated spinlock, which needs to be held before waking up or sleeping a thread on that wait channel.
