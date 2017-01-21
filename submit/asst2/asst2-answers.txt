@@ -21,4 +21,4 @@ wchan_sleep is called when a thread goes to sleep. This function changes the thr
 
 9. wchan_sleep is used to make a thread sleep while it is waiting for a lock to be released (P in kern/thread/synch.c). wchan_wakeone is then used to wake up threads when a lock has been released (V in kern/thread/synch.c).
 
-10. wait channels have an associated spinlock, which needs to be held before waking up or sleeping a thread on that wait channel.
+10. wait channels have an associated spinlock, which is held by the thread who called wchan_sleep, and is only released until after the thread is added to the waitlist.
