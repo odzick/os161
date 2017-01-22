@@ -216,6 +216,7 @@ bool
 lock_do_i_hold(struct lock *lock)
 {
         KASSERT(lock != NULL);
+
         spinlock_acquire(&lock->lk_lock);
 
         bool i_hold = lock->lk_owner == curthread;
@@ -265,6 +266,7 @@ cv_destroy(struct cv *cv)
 
         spinlock_cleanup(&cv->cv_lock);
         wchan_destroy(cv->cv_wchan);
+        
         kfree(cv->cv_name);
         kfree(cv);
 }
@@ -288,7 +290,6 @@ void
 cv_signal(struct cv *cv, struct lock *lock)
 {
         KASSERT(cv != NULL);
-
         /*make sure this thread holds the lock*/
         KASSERT(lock_do_i_hold(lock));
 
@@ -305,8 +306,7 @@ void
 cv_broadcast(struct cv *cv, struct lock *lock)
 {
         KASSERT(cv != NULL);
-        
-	   /*make sure this thread holds the lock*/
+        /*make sure this thread holds the lock*/
         KASSERT(lock_do_i_hold(lock));
 
         /*spin lock is needed here to ensure that lock 
