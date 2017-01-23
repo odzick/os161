@@ -17,7 +17,7 @@ wchan_sleep is called when a thread goes to sleep. This function changes the thr
 
 7. thread_switch picks the next thread by selecting the next S_READY thread from the front of the queue  
 
-8. ltimer_irq in kern/dev/lamebus/ltimer.c calls hardclock() which which after SCHEDULE_HARDCLOCKS iterations, calls schedule() which handles the thread switching.
+8. mainbus_interrupt in kern/arch/sys161/dev/lamebus_machdep.c calls the hardware independent function hardclocks() after a hardware timer interrupt. After hardclock calls thread_yield  which then call thread_switch which switches to other threads.
 
 9. wchan_sleep is used to make a thread sleep while it is waiting for a lock to be released (P in kern/thread/synch.c). wchan_wakeone is then used to wake up threads when a lock has been released (V in kern/thread/synch.c).
 
