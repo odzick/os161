@@ -223,7 +223,7 @@ lock_do_i_hold(struct lock *lock)
 
         spinlock_release(&lock->lk_lock);
 
-        return i_hold; 
+        return i_hold;
 }
 
 ////////////////////////////////////////////////////////////
@@ -264,6 +264,7 @@ cv_destroy(struct cv *cv)
 {
         KASSERT(cv != NULL);
 
+
         spinlock_cleanup(&cv->cv_lock);
         wchan_destroy(cv->cv_wchan);
         
@@ -286,6 +287,7 @@ cv_wait(struct cv *cv, struct lock *lock)
         spinlock_release(&cv->cv_lock);
         lock_acquire(lock);
 }
+
 void
 cv_signal(struct cv *cv, struct lock *lock)
 {
