@@ -9,17 +9,24 @@
 
 #define NROPES 16
 
+/* decleration of addition functions*/
 void setup(void);
 void wait_and_clean(void);
 
+/*	
+*	When 0 dandelion, marigold, and Lord Flower Killer
+*	threads should finish
+*/
 static int ropes_left = NROPES;
+
+/*codition used for the cv in balloon and main thread */
 static int threads_done = 0;
 
 /*
 *  Struct representing a rope. Each rope
 *  has and associated lock, stake, and is_tied
 *  value that is true if the rope is still attached
-*  to the baloon 
+*  to the balloon 
 */
 struct rope {
 			volatile bool is_tied;
@@ -34,18 +41,24 @@ struct rope {
 struct rope ropes[NROPES];
 
 /* Synchronization primitives */
+
+/* lock to be held when accessing ropes_left */
 struct lock *ropes_left_lk;
+/* lock to be held when canipulating threads_done */
 struct lock *threads_done_lk;
+/* lock to be held by a thread when printing */
 struct lock *print_lk;
+
+/* cv's for balloon and main thread (both dependent on threads_done) */
 struct cv *balloon_cv;
 struct cv *airballoon_cv;
 
-
 /*
- * Describe your design and any invariants or locking protocols 
- * that must be maintained. Explain the exit conditions. How
- * do all threads know when they are done?  
- */
+*	DANDELION: picks ropes via a hook, so we simply select a random
+*	number and attempt to cut the rope at that index in the ropes array.
+*
+*	EXIT CONDITION: ropes_left == 0
+*/
 
 static
 void
@@ -60,6 +73,7 @@ dandelion(void *p, unsigned long arg)
 	
 	while(!done)
 	{
+		/* choose random hook */
 		rope_hook = random() % NROPES;
 		
 		lock_acquire(ropes[rope_hook].rope_lk);
@@ -86,15 +100,16 @@ dandelion(void *p, unsigned long arg)
 		}
 
 		lock_release(ropes[rope_hook].rope_lk);
+
+		/*we cut a rope or couldn't find our rope so we'll switch thread*/
 		thread_yield();
 	}
 
+	/*we are done, need to inc threads done and wake up balloon if others done */
 	lock_acquire(threads_done_lk);
 	threads_done++;
 	if (threads_done == 3)
-	{
 		cv_signal(balloon_cv, threads_done_lk);
-	}
 	lock_release(threads_done_lk);
 
 	lock_acquire(print_lk);
@@ -103,6 +118,15 @@ dandelion(void *p, unsigned long arg)
 
 	thread_exit();
 }
+
+/*
+*	MARIGOLD: picks ropes via a stake. Picks a random stake
+*	and iterates through every rope in ropes array to see if
+*	there is a rope with the associate stake, and then attempts
+*	to cut it.
+*
+*	EXIT CONDITION: ropes_left == 0
+*/
 
 static
 void
@@ -117,15 +141,16 @@ marigold(void *p, unsigned long arg)
 	kprintf("Marigold thread starting\n");
 	while(!done)
 	{
+		/* choose random stake */
 		stake_num = random() % NROPES;
 
+		/* try to find rope tied to random stake */
 		for(i = 0; i < NROPES; i++)
 		{
 			lock_acquire(ropes[i].rope_lk);
 
 			if(ropes[i].stake == stake_num)
 			{
-
 				if (ropes[i].is_tied == true)
 				{
 					lock_acquire(print_lk);
@@ -148,14 +173,13 @@ marigold(void *p, unsigned long arg)
 					lock_release(ropes_left_lk);
 				}
 			}
-
 			lock_release(ropes[i].rope_lk);
 		}
-
+		/* we cut a rope or couldn't find our rope so we'll switch threads */
 		thread_yield();
 	}
 
-
+	/* we are done, need to inc threads done and wake up balloon if others done */
 	lock_acquire(threads_done_lk);
 	threads_done++;
 	if (threads_done == 3)
@@ -168,6 +192,16 @@ marigold(void *p, unsigned long arg)
 
 	thread_exit();
 }
+
+/*
+*	FLOWERKILLER: flowerkill finds a rope via a stake. Random number
+*	is selected for from stake and to_stake. Flowerkiller checks each
+*	rope to see if it has from_state associated with it. If it does
+*	Flowerkiller attempts to switch the rope's stake from froms_stake
+*	to to_stake.
+*
+*	EXIT CONDITION: ropes_left == 0
+*/
 
 static
 void
@@ -187,16 +221,18 @@ flowerkiller(void *p, unsigned long arg)
 
 	while(!done)
 	{
+		/* choose randome to and from stakes */
 		from_stake = random() % NROPES;
 		to_stake = random() % NROPES;
 
+		/* try to find a rope attached to from stake */
 		for(rope_number = 0 ; rope_number < NROPES; rope_number++)
 		{
 			lock_acquire(ropes[rope_number].rope_lk);
 
 			if(ropes[rope_number].stake == from_stake)
 			{
-
+				/* if there is a rope tied to stake, switch the stake */
 				if (ropes[rope_number].is_tied == true)
 				{
 					lock_acquire(print_lk);
@@ -209,15 +245,17 @@ flowerkiller(void *p, unsigned long arg)
 
 			lock_release(ropes[rope_number].rope_lk);
 		}
-
+		/* check if all the threads have been cut before trying to switch another */
 		lock_acquire(ropes_left_lk);
 		if(ropes_left == 0)
 			done = true;
 		lock_release(ropes_left_lk);
 
+		/* we switched a rope, or no ropes on from_stake so we'll switch threads */
 		thread_yield();
 	}
 
+	/* we are done, need to inc threads done and wake up balloon if others done */
 	lock_acquire(threads_done_lk);
 	threads_done++;
 	if (threads_done == 3)
@@ -232,6 +270,14 @@ flowerkiller(void *p, unsigned long arg)
 	thread_exit();
 }
 
+/*
+*	BALLOON: waits for lordflowerkiller, dandelion, and marigold to finish.
+*	once they are all finished the  ropes have been cut, and we can signal for
+*	the main thread to finish
+*
+*	EXIT CONDITION: threads_done == 3 (implicitaley ropes_left == 0)
+*/ 
+
 static
 void
 balloon(void *p, unsigned long arg)
@@ -243,15 +289,13 @@ balloon(void *p, unsigned long arg)
 	kprintf("Balloon thread starting\n");
 	lock_release(print_lk);
 
+	/* wait for marigold, dandelion, and flowerkiller to finish */
 	lock_acquire(threads_done_lk);
-
 	while(threads_done != 3)
 		cv_wait(balloon_cv, threads_done_lk);
-
 	threads_done++;
-
+	/* since we are done, wake up main as well */
 	cv_signal(airballoon_cv, threads_done_lk);
-
 	lock_release(threads_done_lk);
 
 	lock_acquire(print_lk);
@@ -264,7 +308,7 @@ balloon(void *p, unsigned long arg)
 
 int
 airballoon(int nargs, char **args)
-{
+{	/* we are done, need to inc threads done and wake up balloon if others done */
 
 	int err = 0;
 
@@ -304,6 +348,7 @@ done:
 	return 0;
 }
 
+/* initialize the data stuctures and Synch primatives we will be using */
 void 
 setup()
 {
@@ -326,22 +371,23 @@ setup()
 	}
 }
 
+/* last thing our main calls. Waits for other threads and frees memory used */
 void
 wait_and_clean()
 {
 	int i;
 
+	/* sleep until balloon, dandelion, marigold, and flowerkiller are done */
 	lock_acquire(threads_done_lk);
-
 	while(threads_done != 4)
 		cv_wait(airballoon_cv, threads_done_lk);
-
 	lock_release(threads_done_lk);
 
 	lock_acquire(print_lk);
 	kprintf("Main thread done\n");
 	lock_release(print_lk);	
 
+	/* clean up data structures */
 	lock_destroy(ropes_left_lk);
 	lock_destroy(threads_done_lk);
 	lock_destroy(print_lk);
@@ -353,5 +399,4 @@ wait_and_clean()
 	{
 		lock_destroy(ropes[i].rope_lk);
 	}
-
 }
