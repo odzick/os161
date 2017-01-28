@@ -308,8 +308,7 @@ balloon(void *p, unsigned long arg)
 
 int
 airballoon(int nargs, char **args)
-{	/* we are done, need to inc threads done and wake up balloon if others done */
-
+{	
 	int err = 0;
 
 	(void)nargs;
@@ -323,6 +322,7 @@ airballoon(int nargs, char **args)
 	if(err)
 		goto panic;
 	
+
 	err = thread_fork("Dandelion Thread",
 			  NULL, dandelion, NULL, 0);
 	if(err)
@@ -371,7 +371,7 @@ setup()
 	}
 }
 
-/* last thing our main calls. Waits for other threads and frees memory used */
+/* last thing our main function calls. Waits for other threads and frees memory used */
 void
 wait_and_clean()
 {
