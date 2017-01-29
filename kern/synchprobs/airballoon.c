@@ -396,7 +396,5 @@ wait_and_clean()
 	cv_destroy(airballoon_cv);
 
 	for(i = 0; i < NROPES; i++)
-	{
 		lock_destroy(ropes[i].rope_lk);
-	}
 }
