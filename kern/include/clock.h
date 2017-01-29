@@ -42,8 +42,6 @@
  * when the CPU is not idle, for scheduling.
  */
 
-/* hardclocks per second */
-#define HZ  100
 #if OPT_SYNCHPROBS
 /* Make synchronization more exciting :) */
 #define HZ  10000
