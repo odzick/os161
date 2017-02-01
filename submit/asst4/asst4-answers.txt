@@ -1,0 +1,3 @@
+1. ELF Magic numbers are the begging bytes of a file, that are used to mark that file as being of an elf type. The elf magic numbers are defined one line 83 - 86 in kern/include/elf.h  
+
+2. UIO_USERISPACE is the begging address of memory where program instructions are stored. UIO_USERSPACE refers to the location of user program data. UIO_SYSSPACE should be used .
