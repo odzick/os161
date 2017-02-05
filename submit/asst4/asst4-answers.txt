@@ -1,3 +1,8 @@
-1. ELF Magic numbers are the begging bytes of a file, that are used to mark that file as being of an elf type. The elf magic numbers are defined one line 83 - 86 in kern/include/elf.h  
+1. ELF Magic numbers are at the beggining bytes of a file, and are used to mark that file as being of an elf type. The elf magic numbers are defined on line 83 - 86 in kern/include/elf.h  as ELFMAG[0..3] 0x7f, E, L, F.
 
-2. UIO_USERISPACE is the begging address of memory where program instructions are stored. UIO_USERSPACE refers to the location of user program data. UIO_SYSSPACE should be used .
+2. UIO_USERISPACE contains the instructions for user processes. UIO_USERSPACE refers to the location of user process data. UIO_SYSSPACE should be used when the source or destination of the memory tansfer are in the kernel space. 
+
+3. The memory is loaded at a virtual address. The uio struct contains a pointer to the virtual address, and therefore the struct can be stored on the stack.
+
+4. vfs_close() must be called so that another process or thread can execute the same program in that file.
+
