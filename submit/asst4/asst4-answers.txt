@@ -10,4 +10,6 @@
 
 6. copyin() and copyout() are defined in kern/vm/copyinout.c. memmove() is defined in common/libc/string/memmove.c. Copyin/copyout copy data from kernel addresses to user addresses (or vice versa) . Therefore, copyin/copyout functions need to make sure need to make sure that user pointers are not accessing off limit addresses, something memove() does not do.
 
-7. 
+7. It is used to distinguish user pointers from kernel pointers.  
+
+8. from kern/arch/mips/include/trapframe.h #define EX_SYS 8 .  
