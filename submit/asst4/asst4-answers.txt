@@ -6,3 +6,8 @@
 
 4. vfs_close() must be called so that another process or thread can execute the same program in that file.
 
+5. mips_usermode() in kern/arch/mips/locor/trap.c is called to change into user mode. The function itself is machine independent as it calls functions (for instance to turn off interrupts) whose implementation could change for different architectures. 
+
+6. copyin() and copyout() are defined in kern/vm/copyinout.c. memmove() is defined in common/libc/string/memmove.c. Copyin/copyout copy data from kernel addresses to user addresses (or vice versa) . Therefore, copyin/copyout functions need to make sure need to make sure that user pointers are not accessing off limit addresses, something memove() does not do.
+
+7. 
