@@ -1,0 +1,91 @@
+syscalls TODO in asst4
+
+open()
+    arguments: const char *filename, int flags, mode_t mode
+    return: On success non-negative file handle. On error -1
+    errors: ENODEV  The device prefix of filename did not exist.
+            ENOTDIR     A non-final component of filename was not a directory.
+            ENOENT      A non-final component of filename did not exist.
+            ENOENT      The named file does not exist, and O_CREAT was not specified.
+            EEXIST      The named file exists, and O_EXCL was specified.
+            EISDIR      The named object is a directory, and it was to be opened for writing.
+            EMFILE      The process's file table was full, or a process-specific limit on open files was reached.
+            ENFILE      The system file table is full, if such a thing exists, or a system-wide limit on open files was reached.
+            ENXIO       The named object is a block device with no filesystem mounted on it.
+            ENOSPC      The file was to be created, and the filesystem involved is full.
+            EINVAL      flags contained invalid values.
+            EIO     A hard I/O error occurred.
+            EFAULT      filename was an invalid pointer.
+
+    -must update ... 
+    -use vfs_open() 
+
+close()
+    arguments: int fd (filehandle)
+    return: close file return 0, on error return -1
+    errors: EBADF   fd is not a valid file handle.
+            EIO     A hard I/O error occurred.
+
+    -must update ...
+    -use vfs_close()
+
+read() 
+    arguments: int fd (file handle), void *buf (location to store bytes) , size_t buflen (num bytes to store) 
+    return: The count of bytes read is returned (should be +ve). A return value of 0 should be construed as signifying end-of-file. On error, read returns -1 
+    errors: EBADF   fd is not a valid file descriptor, or was not opened for reading.
+            EFAULT  Part or all of the address space pointed to by buf is invalid.
+            EIO     A hardware I/O error occurred reading the data.
+    -VOP_READ()
+    -
+
+write()
+    arguments: (int fd, const void *buf, size_t nbytes) writes up to buflen bytes to the file specified by fd, at the location in the file specified by the current seek position of the file, taking the data from the space pointed 
+    return: The count of bytes written is returned. This count should be positive. A return value of 0 means that nothing could be written, but that no error occurred; this only occurs at end-of-file on fixed-size objects. On error, write returns -1 and sets errno to a suitable error code for the error condition encountered.  
+    errors: EBADF   fd is not a valid file descriptor, or was not opened for writing.
+            EFAULT  Part or all of the address space pointed to by buf is invalid.
+            ENOSPC  There is no free space remaining on the filesystem containing the file.
+            EIO     A hardware I/O error occurred writing the data.
+
+    -VOP_WRITE()
+
+chdir()
+    arguments: const char *pathname
+    return: 0 on success. On error, -1
+    errors:ENODEV   The device prefix of pathname did not exist.
+            ENOTDIR     A non-final component of pathname was not a directory.
+            ENOTDIR     pathname did not refer to a directory.
+            ENOENT      pathname did not exist.
+            EIO         A hard I/O error occurred.
+            EFAULT      pathname was an invalid pointer.
+
+    -vfs_chdir(char *path);
+
+__getcwd()
+    arguments: char *buf, size_t buflen
+    return: length of data returned. On error -1 is returned
+    errors: ENOENT  A component of the pathname no longer exists.
+            EIO     A hard I/O error occurred.
+            EFAULT      buf points to an invalid address.
+
+    -vfs_getcwd(struct uio *buf);
+
+lseek()
+    arguments: int fd, off_t pos, int whence
+   alters the current seek position of the file handle filehandle, seeking to a new position based on pos and whence.
+   If whence is
+       SEEK_SET, the new position is pos.
+       SEEK_CUR, the new position is the current position plus pos.
+       SEEK_END, the new position is the position of end-of-file plus pos.
+           anything else, lseek fails. 
+    return: return new position, on error -1
+    errors: EBADF   fd is not a valid file handle.
+            ESPIPE      fd refers to an object which does not support seeking.
+            EINVAL      whence is invalid.
+            EINVAL      The resulting seek position would be negative.
+
+dup2()
+    arguments: int oldfd, int newfd clones the file handle oldfd onto the file handle newfd.
+    return: returns newfd. On error, -1 is returned
+    errors:EBADF    oldfd is not a valid file handle, or newfd is a value that cannot be a valid file handle.
+        EMFILE      The process's file table was full, or a process-specific limit on open files was reached.
+        ENFILE      The system's file table was full, if such a thing is possible, or a global limit on open files was reached.
