@@ -447,3 +447,10 @@ file		test/synchtest.c
 file		test/malloctest.c
 file		test/fstest.c
 optfile net	test/nettest.c
+
+########################################
+#                                      #
+#           ADDED for ASST4            #
+#                                      #
+########################################
+file        vfs/filetable.c

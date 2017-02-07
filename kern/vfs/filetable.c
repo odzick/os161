@@ -1,8 +1,6 @@
 #include<filetable.h>
 #include<vnode.h>
-#include<type.h>
-
-
+#include<types.h>
 
 filetable* 
 ft_create(void)
