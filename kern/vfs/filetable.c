@@ -1,8 +1,7 @@
-#include<filetable.h>
-#include<vnode.h>
-#include<types.h>
+#include <filetable.h>
+#include <lib.h>
 
-filetable* 
+struct filetable* 
 ft_create(void)
 {
     int i;
@@ -13,31 +12,30 @@ ft_create(void)
         ft->files[i] = NULL;
 
     ft->last = 0;
-    ft->lock = lock_create("file_table lock");
+    ft->ft_lock = lock_create("file_table lock");
 
     return ft; 
 }
 
 void
-ft_destroy(filetable* ft)
+ft_destroy(struct filetable* ft)
 {
-    lock_destroy(ft->lock);
+    lock_destroy(ft->ft_lock);
     kfree(ft);
 }
 
 //TODO: check every index for last
-void
-ft_add(filetable* ft, int fd, file* file) 
+int
+ft_add(struct filetable* ft, struct file* file) 
 {
-   int i; 
+   int fd; 
 
    if(ft->files[ft->last] != NULL) 
-       return;
+       return -1;
 
     ft->files[ft->last] = file; 
-}
+    fd = ft->last++;
+    ft->last++;
 
-void
-ft_remove()
-{
+    return fd;
 }

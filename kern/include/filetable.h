@@ -1,8 +1,9 @@
 #ifndef _FILETABLE_H_ 
 #define _FILETABLE_H_
 
-#include<vnode.h>
-#include<types.h>
+#include <vnode.h>
+#include <types.h>
+#include <synch.h>
 
 #define MAX_FILES 32
 
@@ -23,8 +24,8 @@ struct filetable{
         int last;
 };
 
-filetable* ft_create(void);
-void ft_destroy(filetable*);
-void ft_add(filetable* ft, int fd, file* file) 
+struct filetable* ft_create(void);
+void ft_destroy(struct filetable*);
+int ft_add(struct filetable* ft, struct file* file); 
 
 #endif /* _FILETABLE_H_ */
