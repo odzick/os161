@@ -1,3 +1,4 @@
+#include <types.h>
 #include <filetable.h>
 #include <lib.h>
 

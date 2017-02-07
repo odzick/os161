@@ -2,7 +2,6 @@
 #define _FILETABLE_H_
 
 #include <vnode.h>
-#include <types.h>
 #include <synch.h>
 
 #define MAX_FILES 32
