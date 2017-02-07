@@ -454,3 +454,4 @@ optfile net	test/nettest.c
 #                                      #
 ########################################
 file        vfs/filetable.c
+file        syscall/file_syscalls.c
