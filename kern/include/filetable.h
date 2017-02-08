@@ -27,6 +27,6 @@ struct filetable* ft_create(void);
 void ft_destroy(struct filetable*);
 int ft_add(struct filetable* ft, struct file* file); 
 struct file* file_create(const char *filename, vnode *file_vnode, mode_t file_mode);
-void file_destroy(void);
+void file_destroy(struct *file fl);
 
 #endif /* _FILETABLE_H_ */

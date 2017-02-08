@@ -63,6 +63,8 @@ file_create(const char *filename, vnode *file_vnode, mode_t file_mode)
 }
 
 void
-file_destroy(void)
+file_destroy(struct *file fl)
 {
+    lock_destroy(fl->file_lock);
+    kfree(fl);
 }
