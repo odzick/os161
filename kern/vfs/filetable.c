@@ -40,3 +40,21 @@ ft_add(struct filetable* ft, struct file* file)
 
     return fd;
 }
+
+struct file*
+file_create(const char *filename, vnode *file_vnode, mode_t file_mode)
+{
+    struct file* fl = kmalloc(sizeof(struct file));
+    fl->filename = filename;
+    fl->file_vnode = file_vnode;
+    fl->file_refcount = 1;
+    fl->mode = file_mode;
+    fl->file_offset = 0;
+    fl->file_lock = lock_create("file lock");
+    return fl;
+}
+
+void
+file_destroy(void)
+{
+}
