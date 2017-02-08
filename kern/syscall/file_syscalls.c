@@ -9,6 +9,7 @@
 int 
 open(const char *filename, int flags, mode_t mode)
 {
+    
     return 0;
 }
 
@@ -22,7 +23,7 @@ read(int fd, void *buf, size_t buflen)
 
 ssize_t
 write(int fd, const void *buf, size_t nbytes)
-{
+{   
     return 0; 
 }
 
