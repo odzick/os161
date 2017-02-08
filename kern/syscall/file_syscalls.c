@@ -1,15 +1,18 @@
 #include <types.h>
 #include <copyinout.h>
 #include <syscall.h>
+#include <vfs.h>
+#include <proc.h>
+#include <current.h>
 #include <filetable.h>
 
-
+static
 int 
-open(const char *filename, int flags, mode_t mode)
+open(char *filename, int flags, mode_t mode)
 {
-    vnode **new_vnode; 
+    struct vnode **new_vnode;
+    int fd;
     int result;
-    
 
     result = vfs_open(filename, flags, mode,  new_vnode);
 
@@ -18,8 +21,12 @@ open(const char *filename, int flags, mode_t mode)
        
 
     struct file* new_file = file_create(filename, *new_vnode, mode);
+    fd = ft_add(curproc->p_filetable, new_file); 
 
-    return 0;
+    if(fd == -1)
+        return -1;
+
+    return fd;
 }
 
 

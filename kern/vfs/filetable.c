@@ -1,5 +1,6 @@
 #include <types.h>
 #include <filetable.h>
+#include <vnode.h>
 #include <lib.h>
 
 struct filetable* 
@@ -37,7 +38,7 @@ ft_add(struct filetable* ft, struct file* file)
     ft->files[ft->last] = file; 
     fd = ft->last;
 
-    for(i = 0; i < MAXFILES; i++)
+    for(i = 0; i < MAX_FILES; i++)
     {
         if(ft->files[i] == NULL)
         {
@@ -50,7 +51,7 @@ ft_add(struct filetable* ft, struct file* file)
 }
 
 struct file*
-file_create(const char *filename, vnode *file_vnode, mode_t file_mode)
+file_create(const char* filename, struct vnode* file_vnode, mode_t file_mode)
 {
     struct file* fl = kmalloc(sizeof(struct file));
     fl->filename = filename;
