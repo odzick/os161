@@ -25,7 +25,6 @@ ft_destroy(struct filetable* ft)
     kfree(ft);
 }
 
-//TODO: check every index for last
 int
 ft_add(struct filetable* ft, struct file* file) 
 {

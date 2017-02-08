@@ -11,8 +11,11 @@ open(const char *filename, int flags, mode_t mode)
     int result;
 
     result = vfs_open(filename, flags, mode,  new_vnode);
+
     if(result)
         return result;
+
+    struct file* new_file = file_create(filename, *new_vnode, mode);
 
     return 0;
 }
