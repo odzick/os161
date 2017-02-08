@@ -75,6 +75,7 @@ proc_create(const char *name)
 
 	threadarray_init(&proc->p_threads);
 	spinlock_init(&proc->p_lock);
+    ft_create(&proc->p_filetable);
 
 	/* VM fields */
 	proc->p_addrspace = NULL;
@@ -167,6 +168,7 @@ proc_destroy(struct proc *proc)
 
 	threadarray_cleanup(&proc->p_threads);
 	spinlock_cleanup(&proc->p_lock);
+    ft_destroy(&proc->p_filetable);
 
 	kfree(proc->p_name);
 	kfree(proc);

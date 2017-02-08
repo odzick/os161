@@ -4,7 +4,7 @@
 #include <vnode.h>
 #include <synch.h>
 
-#define MAX_FILES 32
+//#define MAX_FILES 32
 
 /* Struct representing a file in the filetable */
 struct file{
@@ -19,7 +19,7 @@ struct file{
 /* Struct representing a process filetable */
 struct filetable{
         struct lock *ft_lock;
-        struct file *files[MAX_FILES];
+        struct file *files[MAXFILES];
         int last;
 };
 
