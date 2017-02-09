@@ -35,6 +35,7 @@
 #include <thread.h>
 #include <current.h>
 #include <syscall.h>
+#include <file_syscalls.h>
 
 
 /*
@@ -110,37 +111,37 @@ syscall(struct trapframe *tf)
 		break;
 
 	    case SYS_open:
-	    err = open(/*const char *filename*/tf->tf_a0, 
-	    /*int flags*/tf->tf_a1, /*mode_t mode*/ tf->tf_a2);
+	    err = open(/*const char *filename*/(char *)tf->tf_a0, 
+	    /*int flags*/tf->tf_a1, /*mode_t mode*/ tf->tf_a2, &retval);
 	    break;
 	    
-	    case SYS_read:
-	    err = read(int fd, void *buf, size_t buflen);
-	    break;
-	    
-	    case SYS_write:
-        err = write(int fd, const void *buf, size_t nbytes);
-        break;
-        
-        case SYS_lseek:
-        err = lseek(int fd, off_t pos, int whence);
-        break;
-        
-        case SYS_close:
-        err = close(int fd);
-        break;
-        
-        case: SYS_dup2:
-        err = dup2(int oldfd, int newfd);
-        break;
-        
-        case: SYS_chdir:
-        err = chdir(const char *pathname);
-        break;
-        
-        case: SYS___getcwd:
-        err = __getcwd(char *buf, size_t buflen);
-        break;
+	    //case SYS_read:
+	    ////err = read(int fd, void *buf, size_t buflen);
+	    //break;
+	    //
+	    //case SYS_write:
+        ////err = write(int fd, const void *buf, size_t nbytes);
+        //break;
+        //
+        //case SYS_lseek:
+        ////err = lseek(int fd, off_t pos, int whence);
+        //break;
+        //
+        //case SYS_close:
+        ////err = close(int fd);
+        //break;
+        //
+        //case: SYS_dup2:
+        ////err = dup2(int oldfd, int newfd);
+        //break;
+        //
+        //case: SYS_chdir:
+        ////err = chdir(const char *pathname);
+        //break;
+        //
+        //case: SYS___getcwd:
+        ////err = __getcwd(char *buf, size_t buflen);
+        //break;
         
 	    default:
 		kprintf("Unknown syscall %d\n", callno);

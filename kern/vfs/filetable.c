@@ -8,12 +8,12 @@ ft_create(void)
 {
     int i;
 
-    struct filetable* ft = (filetable*)kmalloc(sizeof(struct filetable));
+    struct filetable* ft = kmalloc(sizeof(struct filetable));
 
-    for(i = 0; i < MAX_FILES; i++)
+    for(i = 0; i < OPEN_MAX; i++)
         ft->files[i] = NULL;
 
-    ft->last = 0;
+    ft->last = 3;
     ft->ft_lock = lock_create("file_table_lock");
 
     return ft; 
@@ -38,7 +38,7 @@ ft_add(struct filetable* ft, struct file* file)
     ft->files[ft->last] = file; 
     fd = ft->last;
 
-    for(i = 0; i < MAX_FILES; i++)
+    for(i = 3; i < OPEN_MAX; i++)
     {
         if(ft->files[i] == NULL)
         {
@@ -64,7 +64,7 @@ file_create(const char* filename, struct vnode* file_vnode, mode_t file_mode)
 }
 
 void
-file_destroy(struct *file fl)
+file_destroy(struct file* fl)
 {
     lock_destroy(fl->file_lock);
     kfree(fl);

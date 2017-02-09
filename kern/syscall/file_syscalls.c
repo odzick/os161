@@ -5,28 +5,29 @@
 #include <proc.h>
 #include <current.h>
 #include <filetable.h>
+#include <file_syscalls.h>
 
-static
 int 
-open(char *filename, int flags, mode_t mode)
+open(char *filename, int flags, mode_t mode, int32_t *retval)
 {
-    struct vnode **new_vnode;
+    struct vnode *new_vnode = NULL;
     int fd;
     int result;
 
-    result = vfs_open(filename, flags, mode,  new_vnode);
+    result = vfs_open(filename, flags, mode,  &new_vnode);
 
     if(result)
         return result;
        
 
-    struct file* new_file = file_create(filename, *new_vnode, mode);
+    struct file* new_file = file_create(filename, new_vnode, mode);
     fd = ft_add(curproc->p_filetable, new_file); 
 
     if(fd == -1)
-        return -1;
+        return 1;
 
-    return fd;
+    *retval = fd;
+    return 0;
 }
 
 
