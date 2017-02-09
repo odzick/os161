@@ -1,5 +1,6 @@
 #include <types.h>
 #include <filetable.h>
+#include <kern/errno.h>
 #include <vnode.h>
 #include <lib.h>
 
@@ -27,16 +28,15 @@ ft_destroy(struct filetable* ft)
 }
 
 int
-ft_add(struct filetable* ft, struct file* file) 
+ft_add(struct filetable* ft, struct file* file, int* fd) 
 {
    int i;
-   int fd; 
 
    if(ft->files[ft->last] != NULL) 
-       return -1;
+       return EMFILE;
 
     ft->files[ft->last] = file; 
-    fd = ft->last;
+    *fd = ft->last;
 
     for(i = 3; i < OPEN_MAX; i++)
     {
@@ -47,11 +47,11 @@ ft_add(struct filetable* ft, struct file* file)
         }    
     }
 
-    return fd;
+    return 0;
 }
 
-struct file*
-file_create(const char* filename, struct vnode* file_vnode, mode_t file_mode)
+int 
+file_create(const char* filename, struct vnode* file_vnode, mode_t file_mode, struct file** ret_file)
 {
     struct file* fl = kmalloc(sizeof(struct file));
     fl->filename = filename;
@@ -60,7 +60,9 @@ file_create(const char* filename, struct vnode* file_vnode, mode_t file_mode)
     fl->mode = file_mode;
     fl->file_offset = 0;
     fl->file_lock = lock_create("file lock");
-    return fl;
+
+   *ret_file = fl;
+    return 0;
 }
 
 void

@@ -11,20 +11,21 @@ int
 open(char *filename, int flags, mode_t mode, int32_t *retval)
 {
     struct vnode *new_vnode = NULL;
+    struct file *new_file = NULL;
     int fd;
     int result;
 
     result = vfs_open(filename, flags, mode,  &new_vnode);
-
     if(result)
         return result;
-       
 
-    struct file* new_file = file_create(filename, new_vnode, mode);
-    fd = ft_add(curproc->p_filetable, new_file); 
+    result = file_create(filename, new_vnode, mode, &new_file);
+    if(result)
+        return result;
 
-    if(fd == -1)
-        return 1;
+    result = ft_add(curproc->p_filetable, new_file, &fd); 
+    if(result)
+        return result;
 
     *retval = fd;
     return 0;
