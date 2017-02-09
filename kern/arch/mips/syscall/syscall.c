@@ -83,7 +83,7 @@ syscall(struct trapframe *tf)
 	int callno;
 	int32_t retval;
 	uint32_t ar3;
-	uint64_t ar2;
+	uint64_t ar2, retval64;
 	int err;
 
 	KASSERT(curthread != NULL);
@@ -120,12 +120,12 @@ syscall(struct trapframe *tf)
 	    
 	    case SYS_read:
 	    err = read(/*int fd*/tf->tf_a0, /*void *buf*/(void *)tf->tf_a1, 
-	        /*size_t buflen*/(size_t)tf->tf_a2);
+	        /*size_t buflen*/(size_t)tf->tf_a2, &retval);
 	    break;
 	    
 	    case SYS_write:
         err = write(/*int fd*/tf->tf_a0, /*const void *buf*/ (void *)tf->tf_a1,
-             /*size_t nbytes*/(size_t) tf->tf_a2);
+             /*size_t nbytes*/(size_t) tf->tf_a2, &retval);
         break;
         
         case SYS_lseek:
@@ -134,26 +134,29 @@ syscall(struct trapframe *tf)
         join32to64(tf->tf_a2, tf->tf_a3, &ar2);
         copyin((const_userptr_t) tf->tf_sp+16,&ar3, sizeof(uint_32t));
         err = lseek(/*int fd*/tf->tf_a0, /*off_t pos*/(off_t) ar2,
-             /*int whence*/ ar3);
-        //TODO: May have to fix return type since it is 64 bit -> use endian.h
-        // split64to32???
+             /*int whence*/ ar3, &retval64);
+        
+        if (err)
+            break;
+        split64to32(retval64, &tf->tf_v0, &tf->tf_v1, &retval); //Split return into v0 and v1
+        tf->tf_a3 = 0; //Signal no error
         break;
         
         case SYS_close:
-        err = close(/*int fd*/tf->tf_a0);
+        err = close(/*int fd*/tf->tf_a0, &retval);
         break;
         
         case: SYS_dup2:
-        err = dup2(/*int oldfd*/tf->tf_a0, /*int newfd*/ tf->tf_a1);
+        err = dup2(/*int oldfd*/tf->tf_a0, /*int newfd*/ tf->tf_a1, &retval);
         break;
         
         case: SYS_chdir:
-        err = chdir(/*const char *pathname*/(char *) tf->tf_a0);
+        err = chdir(/*const char *pathname*/(char *) tf->tf_a0, &retval);
         break;
         
         case: SYS___getcwd:
         err = __getcwd(/*char *buf*/ (char *) tf->tf_a0, 
-            /*size_t buflen*/ (size_t) tf->tf_a1);
+            /*size_t buflen*/ (size_t) tf->tf_a1, &retval);
         break;
         
 	    default:
@@ -172,6 +175,7 @@ syscall(struct trapframe *tf)
 		tf->tf_v0 = err;
 		tf->tf_a3 = 1;      /* signal an error */
 	}
+	else if (callno == SYS_lseek)/*Do nothing, registers already set in lseek case*/;
 	else {
 		/* Success. */
 		tf->tf_v0 = retval;
