@@ -36,8 +36,8 @@ open(char *filename, int flags, mode_t mode, int32_t *retval)
 //{
 //    return 0;
 //}
-//
-//
+
+
 //ssize_t
 //write(int fd, const void *buf, size_t nbytes)
 //{
