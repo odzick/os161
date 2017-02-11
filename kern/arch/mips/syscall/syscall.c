@@ -82,8 +82,8 @@ syscall(struct trapframe *tf)
 {
 	int callno;
 	int32_t retval;
-	//uint32_t ar3;
-	//uint64_t ar2, retval64;
+	uint32_t ar3;
+	uint64_t ar2, retval64;
 	int err;
 
 	KASSERT(curthread != NULL);
@@ -112,44 +112,16 @@ syscall(struct trapframe *tf)
 		err = sys___time((userptr_t)tf->tf_a0,
 				 (userptr_t)tf->tf_a1);
 		break;
-
+    
 	    case SYS_open:
 	    err = open(/*const char *filename*/(char *)tf->tf_a0, 
 	        /*int flags*/tf->tf_a1, /*mode_t mode*/ tf->tf_a2, &retval);
 	    break;
 	    
-       // case SYS_read:
-	   // err = read(/*int fd*/tf->tf_a0, /*void *buf*/(void *)tf->tf_a1, 
-	   //     /*size_t buflen*/(size_t)tf->tf_a2, &retval);
-	   // break;
-	   // 
-	   // case SYS_write:
-       // err = write(/*int fd*/tf->tf_a0, /*const void *buf*/ (void *)tf->tf_a1,
-       //      /*size_t nbytes*/(size_t) tf->tf_a2, &retval);
-       // break;
-       // 
-       // case SYS_lseek:
-       // // Join tf_a2 and tf_a3 to get 64 bit argument, and copy in a value
-       // // from the user-level stack at sp+16
-       // join32to64(tf->tf_a2, tf->tf_a3, &ar2);
-       // copyin((const_userptr_t) tf->tf_sp+16,&ar3, sizeof(uint_32t));
-       // err = lseek(/*int fd*/tf->tf_a0, /*off_t pos*/(off_t) ar2,
-       //      /*int whence*/ ar3, &retval64);
-       // 
-       // if (err)
-       //     break;
-       // split64to32(retval64, &tf->tf_v0, &tf->tf_v1, &retval); //Split return into v0 and v1
-       // tf->tf_a3 = 0; //Signal no error
-       // break;
-       // 
         case SYS_close:
         err = close(/*int fd*/tf->tf_a0);
         break;
-       // 
-       // case: SYS_dup2:
-       // err = dup2(/*int oldfd*/tf->tf_a0, /*int newfd*/ tf->tf_a1, &retval);
-       // break;
-       // 
+
         case SYS_chdir:
         err = chdir(/*const char *pathname*/(char *) tf->tf_a0);
         break;
@@ -158,7 +130,28 @@ syscall(struct trapframe *tf)
         err = __getcwd(/*char *buf*/ (char *) tf->tf_a0, 
             /*size_t buflen*/ (size_t) tf->tf_a1, &retval);
         break; 
+
+	    case SYS_read:
+	    err = read(/*int fd*/tf->tf_a0, /*void *buf*/(void *)tf->tf_a1, 
+	        /*size_t buflen*/(size_t)tf->tf_a2, &retval);
+	    break;
+	    
+	    case SYS_write:
+        err = write(/*int fd*/tf->tf_a0, /*const void *buf*/ (void *)tf->tf_a1,
+             /*size_t nbytes*/(size_t) tf->tf_a2, &retval);
+        break;
         
+        case SYS_lseek:
+        // Join tf_a2 and tf_a3 to get 64 bit argument, and copy in a value
+        // from the user-level stack at sp+16
+        join32to64(tf->tf_a2, tf->tf_a3, &ar2);
+        copyin((const_userptr_t) tf->tf_sp+16,&ar3, sizeof(uint_32t));
+        err = lseek(/*int fd*/tf->tf_a0, /*off_t pos*/(off_t) ar2,
+             /*int whence*/ ar3, &retval64);
+
+        case SYS_dup2:
+        err = dup2(/*int oldfd*/tf->tf_a0, /*int newfd*/ tf->tf_a1, &retval);
+        break;
         
 	    default:
 		kprintf("Unknown syscall %d\n", callno);
