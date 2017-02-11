@@ -171,7 +171,7 @@ void
 uio_init(struct iovec *iov, struct uio *u,
 	  void *buf, size_t len, off_t pos, enum uio_rw rw)
 {
-	iov->iov_kbase = buf;
+	iov->iov_ubase = buf;
 	iov->iov_len = len;
 	u->uio_iov = iov;
 	u->uio_iovcnt = 1;

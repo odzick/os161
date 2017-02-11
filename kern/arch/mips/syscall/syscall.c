@@ -37,6 +37,7 @@
 #include <syscall.h>
 #include <file_syscalls.h>
 #include <endian.h>
+#include <copyinout.h>
 
 
 /*
@@ -145,7 +146,7 @@ syscall(struct trapframe *tf)
         // Join tf_a2 and tf_a3 to get 64 bit argument, and copy in a value
         // from the user-level stack at sp+16
         join32to64(tf->tf_a2, tf->tf_a3, &ar2);
-        copyin((const_userptr_t) tf->tf_sp+16,&ar3, sizeof(uint_32t));
+        copyin((const_userptr_t) tf->tf_sp+16,&ar3, sizeof(uint32_t));
         err = lseek(/*int fd*/tf->tf_a0, /*off_t pos*/(off_t) ar2,
              /*int whence*/ ar3, &retval64);
 

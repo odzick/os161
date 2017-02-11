@@ -14,6 +14,7 @@
 #include <kern/fcntl.h>
 #include <uio.h>
 #include <kern/iovec.h>
+#include <kern/seek.h>
 
 int 
 open(const char *filename, int flags, mode_t mode, int32_t *retval)
@@ -90,17 +91,8 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
     // can be called
     struct uio read_uio;
     struct iovec read_iovec;
-    
-    read_iovec.iov_ubase = buf;
-    read_iovec.iov_len = buflen;
-    
-    read_uio.uio_iov = &read_iovec;
-    read_uio.uio_iovcnt = 1;
-    read_uio.uio_offset = curproc->p_filetable->files[fd]->file_offset;
-    read_uio.uio_resid = buflen;
-    read_uio.uio_segflg = UIO_USERSPACE;
-    read_uio.uio_rw = UIO_READ;
-    read_uio.uio_space = /*RIP*/;
+
+    uio_init(&read_iovec, &read_uio, buf, buflen, curproc->p_filetable->files[fd]->file_offset, UIO_READ);
     
     if (VOP_READ(curproc->p_filetable->files[fd]->file_vnode, &read_uio))
         return EIO; //TODO: I think this is how you would do it
@@ -116,7 +108,7 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
 
 
 ssize_t
-write(int fd, const void *buf, size_t nbytes, int32_t *retval)
+write(int fd, void *buf, size_t nbytes, int32_t *retval)
 {
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
@@ -133,18 +125,9 @@ write(int fd, const void *buf, size_t nbytes, int32_t *retval)
     struct uio write_uio;
     struct iovec write_iovec;
     
-    write_iovec.iov_ubase = buf;
-    write_iovec.iov_len = nbytes;
-    
-    write_uio.uio_iov = &write_iovec;
-    write_uio.uio_iovcnt = 1;
-    write_uio.uio_offset = curproc->p_filetable->files[fd]->file_offset;
-    write_uio.uio_resid = nbytes;
-    write_uio.uio_segflg = UIO_USERSPACE;
-    write_uio.uio_rw = UIO_WRITE;
-    write_uio.uio_space = /*RIP*/;
-    
-    if (VOP_WRITE(curproc->p_filetable->files[fd]->file_vnode, &read_uio))
+    uio_init(&write_iovec, &write_uio, buf, nbytes, curproc->p_filetable->files[fd]->file_offset, UIO_WRITE);
+
+    if (VOP_WRITE(curproc->p_filetable->files[fd]->file_vnode, &write_uio))
         return EIO; //TODO: I think this is how you would do it
     
     unsigned int prev_offset = curproc->p_filetable->files[fd]->file_offset;
@@ -157,8 +140,8 @@ write(int fd, const void *buf, size_t nbytes, int32_t *retval)
 }
 
 
-off_t
-lseek(int fd, off_t pos, int whence, off_t *retval)
+int
+lseek(int fd, off_t pos, int whence, uint64_t *retval)
 {
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
@@ -171,13 +154,13 @@ lseek(int fd, off_t pos, int whence, off_t *retval)
         new_pos = pos;
     else if (whence == SEEK_CUR)
         new_pos = curproc->p_filetable->files[fd]->file_offset + pos;
-    else
-        new_pos = /*TODO:end OF file*/ + pos;
+    //else
+        //new_pos = /*TODO:end OF file*/ + pos;
         
     if (new_pos < 0)
         return EINVAL;
         
-    if (VOP_ISSEEKABLE(curproc->p_filetable->files[fd]->file_vnode)
+    if (VOP_ISSEEKABLE(curproc->p_filetable->files[fd]->file_vnode))
         return ESPIPE;
         
     curproc->p_filetable->files[fd]->file_offset = new_pos;
@@ -243,9 +226,9 @@ dup2(int oldfd, int newfd, int32_t *retval)
     if(curproc->p_filetable->files[oldfd] == NULL)
         return EBADF;
         
-    if (curproc->p_filetable.isfull /*TODO: Omar probably had something 
-    like this in open*/)
-        return EMFILE;
+    //if (curproc->p_filetable.isfull /*TODO: Omar probably had something 
+    //like this in open*/)
+        //return EMFILE;
        
     if (curproc->p_filetable->files[newfd] != NULL)
         if (close(newfd))

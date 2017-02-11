@@ -6,6 +6,6 @@ int close(int fd);
 int __getcwd(char *buf, size_t buflen, int32_t *retval);
 int chdir(char *pathname);
 ssize_t read(int fd, void *buf, size_t buflen, int32_t *retval);
-ssize_t write(int fd, const void *buf, size_t nbytes, int32_t *retval);
-off_t lseek(int fd, off_t pos, int whence, off_t *retval);
+ssize_t write(int fd, void *buf, size_t nbytes, int32_t *retval);
+int lseek(int fd, off_t pos, int whence, uint64_t *retval);
 int dup2(int oldfd, int newfd, int32_t *retval);
