@@ -1,8 +1,10 @@
 #include <types.h>
 #include <filetable.h>
 #include <kern/errno.h>
-#include <vnode.h>
 #include <lib.h>
+#include <vfs.h>
+#include <kern/fcntl.h>
+#include <file_syscalls.h>
 
 struct filetable* 
 ft_create(void)
@@ -14,10 +16,37 @@ ft_create(void)
     for(i = 0; i < OPEN_MAX; i++)
         ft->files[i] = NULL;
 
-    ft->last = 3;
     ft->ft_lock = lock_create("file_table_lock");
 
     return ft; 
+}
+
+/* runprogram and in kernel main */ 
+int
+ft_init(struct filetable *ft)
+{
+   char stdin_path[5] = "con:";
+   char stdout_path[5] = "con:";
+   char stderr_path[5] = "con:";
+   int fd; 
+   int result;
+
+   result = open_ft(stdin_path, O_RDONLY, 0664, &fd, ft);
+   if(result)
+       return result;
+   KASSERT(fd == 0);
+
+   result = open_ft(stdout_path, O_WRONLY, 0664, &fd, ft);
+   if(result)
+       return result;
+   KASSERT(fd == 1);
+
+   result = open_ft(stderr_path, O_WRONLY, 0664, &fd, ft);
+   if(result)
+       return result;
+   KASSERT(fd == 2);
+
+   return 0;
 }
 
 void
@@ -32,20 +61,32 @@ ft_add(struct filetable* ft, struct file* file, int* fd)
 {
    int i;
 
-   if(ft->files[ft->last] != NULL) 
-       return EMFILE;
-
-    ft->files[ft->last] = file; 
-    *fd = ft->last;
-
-    for(i = 3; i < OPEN_MAX; i++)
+    for(i = 0; i < OPEN_MAX; i++)
     {
         if(ft->files[i] == NULL)
         {
-            ft->last = i;
-            break;
+            ft->files[i] = file;
+            *fd = i;
+            return 0;
         }    
     }
+
+    return EMFILE;
+}
+
+int
+ft_remove(struct filetable* ft, int fd) 
+{
+    if(fd < 3 || fd > (OPEN_MAX-1))
+        return EBADF; 
+
+    if(ft->files[fd] == NULL)
+        return EBADF;
+
+    vfs_close(ft->files[fd]->file_vnode);
+
+    ft->files[fd]->file_refcount--;
+    ft->files[fd] = NULL;
 
     return 0;
 }

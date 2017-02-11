@@ -19,7 +19,6 @@ struct file{
 struct filetable{
         struct lock *ft_lock;
         struct file *files[OPEN_MAX];
-        int last;
 };
 
 struct filetable* ft_create(void);
@@ -27,5 +26,7 @@ void ft_destroy(struct filetable*);
 int ft_add(struct filetable* ft, struct file* file, int* fd); 
 int file_create(const char* filename, struct vnode* file_vnode, mode_t file_mode, struct file** ret_file);
 void file_destroy(struct file* fl);
+int ft_init(struct filetable *ft);
+int ft_remove(struct filetable* ft, int fd);
 
 #endif /* _FILETABLE_H_ */

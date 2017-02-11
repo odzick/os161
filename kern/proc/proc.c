@@ -202,6 +202,12 @@ proc_create_runprogram(const char *name)
 		return NULL;
 	}
 
+    int result = ft_init(newproc->p_filetable);
+    if(result){
+        proc_destroy(newproc);
+		return NULL;
+    }
+
 	/* VM fields */
 
 	newproc->p_addrspace = NULL;
@@ -219,6 +225,7 @@ proc_create_runprogram(const char *name)
 		newproc->p_cwd = curproc->p_cwd;
 	}
 	spinlock_release(&curproc->p_lock);
+
 
 	return newproc;
 }
