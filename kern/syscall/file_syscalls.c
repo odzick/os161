@@ -252,19 +252,20 @@ __getcwd(char *buf, size_t buflen, int32_t *retval)
 int
 dup2(int oldfd, int newfd, int32_t *retval)
 {
-    if (newfd < 0 || newfd >= OPEN_MAX || newfd < 0 || newfd >= OPEN_MAX)
+    if (oldfd < 0 || oldfd >= OPEN_MAX || newfd < 0 || newfd >= OPEN_MAX)
         return EBADF; 
     
     if(curproc->p_filetable->files[oldfd] == NULL)
         return EBADF;
         
-    //if (curproc->p_filetable.isfull /*TODO: Omar probably had something 
-    //like this in open*/)
-        //return EMFILE;
+    if(oldfd == newfd){
+        *retval = newfd;
+        return 0;
+    }
        
     if (curproc->p_filetable->files[newfd] != NULL)
         if (close(newfd))
-            return -1/*TODO: Think the error is covered in close*/;
+            return -1;
     
     curproc->p_filetable->files[newfd] = curproc->p_filetable->files[oldfd];
     curproc->p_filetable->files[newfd]->file_refcount++;
