@@ -148,7 +148,7 @@ lseek(int fd, off_t pos, int whence, uint64_t *retval)
         
     off_t new_pos;
     int result;
-    struct stat *file_stat = NULL; 
+    struct stat *file_stat; 
 
     switch(whence){
         case SEEK_SET:
