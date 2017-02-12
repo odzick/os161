@@ -97,7 +97,7 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
     if (VOP_READ(curproc->p_filetable->files[fd]->file_vnode, &read_uio))
         return EIO; //TODO: I think this is how you would do it
     
-    unsigned int prev_offset = curproc->p_filetable->files[fd]->file_offset;
+    off_t prev_offset = curproc->p_filetable->files[fd]->file_offset;
     
     curproc->p_filetable->files[fd]->file_offset = read_uio.uio_offset;
     
@@ -129,7 +129,7 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
     if (VOP_WRITE(curproc->p_filetable->files[fd]->file_vnode, &write_uio))
         return EIO; //TODO: I think this is how you would do it
     
-    unsigned int prev_offset = curproc->p_filetable->files[fd]->file_offset;
+    off_t prev_offset = curproc->p_filetable->files[fd]->file_offset;
    
     curproc->p_filetable->files[fd]->file_offset = write_uio.uio_offset;
     

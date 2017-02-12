@@ -12,7 +12,7 @@ struct file{
         int file_refcount;
         int file_flags;
         mode_t file_mode;
-        unsigned int file_offset;
+        off_t file_offset;
         struct lock *file_lock;
 };
 
