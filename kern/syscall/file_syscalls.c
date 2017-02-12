@@ -31,9 +31,6 @@ open(const char *filename, int flags, mode_t mode, int32_t *retval)
     if(result)
         return result;
 
-   // if(filename == NULL || strlen(filename) == 0)
-   //     return EFAULT;
-
     result = vfs_open(buff, flags, mode,  &new_vnode);
     if(result)
         return result;
@@ -64,9 +61,6 @@ open_ft(const char *filename, int flags, mode_t mode, int32_t *retval, struct fi
 
     if(filename == NULL)
         return EFAULT;
-
-    if((flags != O_RDONLY && flags != O_RDWR && flags != O_WRONLY) || strlen(filename) == 0)
-        return EINVAL;
 
     result = vfs_open((char *)filename, flags, mode,  &new_vnode);
     if(result)
@@ -252,19 +246,24 @@ __getcwd(char *buf, size_t buflen, int32_t *retval)
 int
 dup2(int oldfd, int newfd, int32_t *retval)
 {
-    if (newfd < 0 || newfd >= OPEN_MAX || newfd < 0 || newfd >= OPEN_MAX)
+    int result;
+
+    if (newfd < 0 || newfd >= OPEN_MAX || oldfd < 0 || oldfd >= OPEN_MAX)
         return EBADF; 
-    
+
+    if(oldfd == newfd){
+        *retval = newfd;        
+        return 0;
+    }
+
     if(curproc->p_filetable->files[oldfd] == NULL)
         return EBADF;
         
-    //if (curproc->p_filetable.isfull /*TODO: Omar probably had something 
-    //like this in open*/)
-        //return EMFILE;
-       
-    if (curproc->p_filetable->files[newfd] != NULL)
-        if (close(newfd))
-            return -1/*TODO: Think the error is covered in close*/;
+    if (curproc->p_filetable->files[newfd] != NULL){
+        result = close(newfd);
+        if(result)
+            return result;
+    }
     
     curproc->p_filetable->files[newfd] = curproc->p_filetable->files[oldfd];
     curproc->p_filetable->files[newfd]->file_refcount++;
