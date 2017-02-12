@@ -81,8 +81,7 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
         
-    if (curproc->p_filetable->files[fd]->file_flags != O_RDONLY 
-        && curproc->p_filetable->files[fd]->file_flags != O_RDWR)
+    if (curproc->p_filetable->files[fd]->file_flags == O_WRONLY)
         return EBADF;
         
     if (buf == NULL)
