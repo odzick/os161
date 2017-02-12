@@ -17,6 +17,11 @@
 #include <kern/stat.h>
 #include <kern/seek.h>
 
+/*
+ * This file contains system calls related to files
+ * most of these functions are self explanatory.
+ */
+
 int 
 open(const char *filename, int flags, mode_t mode, int32_t *retval)
 {
@@ -27,6 +32,7 @@ open(const char *filename, int flags, mode_t mode, int32_t *retval)
 
     char buff[PATH_MAX];
 
+    /* copyinstr handles errors for invalid path names */
     result = copyinstr((const_userptr_t)filename, buff, PATH_MAX, NULL);
     if(result)
         return result;
@@ -92,8 +98,7 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
     if (buf == NULL)
         return EFAULT;
     
-    // Create struct uio (which also needs a struct iovec) so that VOP_READ 
-    // can be called
+    /* Create struct uio so that VOP_READ can be called */
     struct uio read_uio;
     struct iovec read_iovec;
 
@@ -103,7 +108,7 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
     if (result)
         return result;
         
-    // Set new file_offset and return the difference 
+    /* Set new file_offset and return the difference */
     off_t prev_offset = curproc->p_filetable->files[fd]->file_offset;
     curproc->p_filetable->files[fd]->file_offset = read_uio.uio_offset;
     *retval = curproc->p_filetable->files[fd]->file_offset - prev_offset;
@@ -116,6 +121,8 @@ ssize_t
 write(int fd, void *buf, size_t nbytes, int32_t *retval)
 {
     int result;
+    struct uio write_uio;
+    struct iovec write_iovec;
 
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
@@ -126,18 +133,14 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
     if (buf == NULL)
         return EFAULT;
     
-    // Create struct uio (which also needs a struct iovec) so that VOP_WRITE 
-    // can be called
-    struct uio write_uio;
-    struct iovec write_iovec;
-    
+    /* Create struct uio so that VOP_WRITE can be called */
     uio_init(&write_iovec, &write_uio, buf, nbytes, curproc->p_filetable->files[fd]->file_offset, UIO_WRITE);
 
     result = VOP_WRITE(curproc->p_filetable->files[fd]->file_vnode, &write_uio);
     if (result)
         return result; 
         
-    // Set new file_offset and return the difference
+    /* Set new file_offset and return the difference */
     off_t prev_offset = curproc->p_filetable->files[fd]->file_offset;
     curproc->p_filetable->files[fd]->file_offset = write_uio.uio_offset;
     *retval = curproc->p_filetable->files[fd]->file_offset - prev_offset;
@@ -149,12 +152,12 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
 int
 lseek(int fd, off_t pos, int whence, off_t *retval)
 {
-    if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
-        return EBADF;
-        
     off_t new_pos;
     int result;
     struct stat file_stat; 
+
+    if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
+        return EBADF;
 
     switch(whence){
         case SEEK_SET:
@@ -206,6 +209,7 @@ chdir(const char *pathname)
     int result;
     char buff[PATH_MAX];
 
+    /* copyinstr handles errors for invalid pathnames */
     result = copyinstr((const_userptr_t)pathname, buff, PATH_MAX, NULL);
     if(result)
         return result;

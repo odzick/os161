@@ -10,7 +10,6 @@ struct filetable*
 ft_create(void)
 {
     int i;
-
     struct filetable* ft = kmalloc(sizeof(struct filetable));
 
     for(i = 0; i < OPEN_MAX; i++)
@@ -21,7 +20,7 @@ ft_create(void)
     return ft; 
 }
 
-/* runprogram and in kernel main */ 
+/* opens stdin, stdout, stderr in a new filetable  */ 
 int
 ft_init(struct filetable *ft)
 {
@@ -81,7 +80,7 @@ ft_remove(struct filetable* ft, int fd)
     if(ft->files[fd] == NULL)
         return EBADF;
 
-
+    /* need to leave vnode open if another ref exists */
     if(ft->files[fd]->file_refcount == 1)
         vfs_close(ft->files[fd]->file_vnode);
 

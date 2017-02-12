@@ -5,7 +5,7 @@
 #include <limits.h>
 #include <synch.h>
 
-/* Struct representing a file in the filetable */
+/* Struct representing an open file in the filetable */
 struct file{
         const char *filename;
         struct vnode *file_vnode;
