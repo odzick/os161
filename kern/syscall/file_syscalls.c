@@ -78,6 +78,8 @@ open_ft(const char *filename, int flags, mode_t mode, int32_t *retval, struct fi
 ssize_t
 read(int fd, void *buf, size_t buflen, int32_t *retval)
 {
+    int result; 
+
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
         
@@ -94,8 +96,9 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
 
     uio_init(&read_iovec, &read_uio, buf, buflen, curproc->p_filetable->files[fd]->file_offset, UIO_READ);
     
-    if (VOP_READ(curproc->p_filetable->files[fd]->file_vnode, &read_uio))
-        return EIO; //TODO: I think this is how you would do it
+    result =VOP_READ(curproc->p_filetable->files[fd]->file_vnode, &read_uio);
+    if (result)
+        return result;
     
     off_t prev_offset = curproc->p_filetable->files[fd]->file_offset;
     
@@ -110,6 +113,8 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
 ssize_t
 write(int fd, void *buf, size_t nbytes, int32_t *retval)
 {
+    int result;
+
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
         
@@ -126,8 +131,9 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
     
     uio_init(&write_iovec, &write_uio, buf, nbytes, curproc->p_filetable->files[fd]->file_offset, UIO_WRITE);
 
-    if (VOP_WRITE(curproc->p_filetable->files[fd]->file_vnode, &write_uio))
-        return EIO; //TODO: I think this is how you would do it
+    result = VOP_WRITE(curproc->p_filetable->files[fd]->file_vnode, &write_uio);
+    if (result)
+        return result; 
     
     off_t prev_offset = curproc->p_filetable->files[fd]->file_offset;
    
@@ -147,7 +153,7 @@ lseek(int fd, off_t pos, int whence, off_t *retval)
         
     off_t new_pos;
     int result;
-    struct stat *file_stat = NULL; 
+    struct stat file_stat; 
 
     switch(whence){
         case SEEK_SET:
@@ -159,10 +165,10 @@ lseek(int fd, off_t pos, int whence, off_t *retval)
         break;
 
         case SEEK_END:
-        result = VOP_STAT(curproc->p_filetable->files[fd]->file_vnode, file_stat); 
+        result = VOP_STAT(curproc->p_filetable->files[fd]->file_vnode, &file_stat); 
         if(result)
             return result;
-        new_pos = file_stat->st_size + pos;
+        new_pos = file_stat.st_size + pos;
         break;
 
         default :
