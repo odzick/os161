@@ -81,6 +81,10 @@ ft_remove(struct filetable* ft, int fd)
     if(ft->files[fd] == NULL)
         return EBADF;
 
+
+   // if(ft->files[fd]->file_refcount == 1)
+   //     vfs_close(ft->files[fd]->file_vnode);
+
     ft->files[fd]->file_refcount--;
     ft->files[fd] = NULL;
 
