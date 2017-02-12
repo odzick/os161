@@ -16,22 +16,29 @@
 
 9) From looking in syscall.c, before the syscall function returns the program
 counter is incremented by 4, therefore an instruction in MIPS is 4 bytes.
+
 10) We want to change kill_curthread so that the kernel does not panic if there 
 a fatal fault in user-level code.
+
 11) From ../arch/mips/syscall/syscall.c, a system call that takes more than 4 
 arguments must get the additional arguments from the user-level stack with copyin 
 starting at sp+16.
+
 12) SYSCALL allows for a system call by loading the syscall number into v0 (the 
 register that is expected from the kernel) and then jumps to the shared syscall 
 code.
+
 13) The instruction on line 84 of ../userland/lib/libc/arch/mips/syscalls-mips.S 
 triggers the system call with the instruction "syscall"
+
 14) The first 4 arguments are passed in registers a0-a3 and 64-bit arguments are 
 passed in pairs of registers, so in this case in a2 and a3. So for lseek, arg0 will
 be passed in a0, arg1 will be passed in a2 and a3 (leaving a1 unused), and finally
 arg3 will be in the user-level stack at sp+16 (explained in q11). Since the return
 value is 64-bit, it will be stored in v0 and v1.
+
 15) To open a file vfs_open() is called. VOP_READ is used to read the file. VOP_WRITE
 is used to write a file. The data structure vnode is used to represent an open file.
+
 16) VOP_INCREF and VOP_DECREF are defined as vnode_incref and vnode_decref, 
 respectfully. They are used to increment and decrement the reperence count.
