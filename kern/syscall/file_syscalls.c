@@ -48,7 +48,7 @@ open(const char *filename, int flags, mode_t mode, int32_t *retval)
 }
 
 /*
- * open_ft should only be used to initialize stdin stdout stderr entires 
+ * open_ft should only be used to initialize stdin stdout stderr entries 
  * in a newly created process
  */
 int 
@@ -244,6 +244,7 @@ int
 dup2(int oldfd, int newfd, int32_t *retval)
 {
     int result;
+
     if (oldfd < 0 || oldfd >= OPEN_MAX || newfd < 0 || newfd >= OPEN_MAX)
         return EBADF; 
 
@@ -260,6 +261,7 @@ dup2(int oldfd, int newfd, int32_t *retval)
         return 0;
     }
        
+    /* if newfd has a file, close it then dup */
     if (curproc->p_filetable->files[newfd] != NULL){
         result = close(newfd);
         if(result)
