@@ -61,10 +61,8 @@ ft_add(struct filetable* ft, struct file* file, int* fd)
 {
    int i;
 
-    for(i = 0; i < OPEN_MAX; i++)
-    {
-        if(ft->files[i] == NULL)
-        {
+    for(i = 0; i < OPEN_MAX; i++){
+        if(ft->files[i] == NULL){
             ft->files[i] = file;
             *fd = i;
             return 0;
@@ -92,13 +90,14 @@ ft_remove(struct filetable* ft, int fd)
 }
 
 int 
-file_create(const char* filename, struct vnode* file_vnode, mode_t file_mode, struct file** ret_file)
+file_create(const char* filename, struct vnode* file_vnode, int flags, mode_t file_mode, struct file** ret_file)
 {
     struct file* fl = kmalloc(sizeof(struct file));
     fl->filename = filename;
     fl->file_vnode = file_vnode;
     fl->file_refcount = 1;
-    fl->mode = file_mode;
+    fl->file_mode = file_mode;
+    fl->file_flags = flags;
     fl->file_offset = 0;
     fl->file_lock = lock_create("file lock");
 

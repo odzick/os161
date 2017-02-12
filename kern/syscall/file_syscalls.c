@@ -14,6 +14,7 @@
 #include <kern/fcntl.h>
 #include <uio.h>
 #include <kern/iovec.h>
+#include <kern/stat.h>
 #include <kern/seek.h>
 
 int 
@@ -31,7 +32,7 @@ open(const char *filename, int flags, mode_t mode, int32_t *retval)
     if(result)
         return result;
 
-    result = file_create(filename, new_vnode, mode, &new_file);
+    result = file_create(filename, new_vnode, flags, mode, &new_file);
     if(result)
         return result;
 
@@ -62,7 +63,7 @@ open_ft(const char *filename, int flags, mode_t mode, int32_t *retval, struct fi
     if(result)
         return result;
 
-    result = file_create(filename, new_vnode, mode, &new_file);
+    result = file_create(filename, new_vnode, flags, mode, &new_file);
     if(result)
         return result;
 
@@ -80,8 +81,8 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
         
-    if (curproc->p_filetable->files[fd]->mode != O_RDONLY 
-        || curproc->p_filetable->files[fd]->mode != O_RDWR)
+    if (curproc->p_filetable->files[fd]->file_flags != O_RDONLY 
+        && curproc->p_filetable->files[fd]->file_flags != O_RDWR)
         return EBADF;
         
     if (buf == NULL)
@@ -113,8 +114,7 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
         
-    if (curproc->p_filetable->files[fd]->mode != O_WRONLY 
-        || curproc->p_filetable->files[fd]->mode != O_RDWR)
+    if (curproc->p_filetable->files[fd]->file_flags == O_RDONLY) 
         return EBADF;
         
     if (buf == NULL)
@@ -131,7 +131,7 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
         return EIO; //TODO: I think this is how you would do it
     
     unsigned int prev_offset = curproc->p_filetable->files[fd]->file_offset;
-    
+   
     curproc->p_filetable->files[fd]->file_offset = write_uio.uio_offset;
     
     *retval = curproc->p_filetable->files[fd]->file_offset - prev_offset;
@@ -146,21 +146,34 @@ lseek(int fd, off_t pos, int whence, uint64_t *retval)
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
         
-    if (whence != SEEK_SET && whence != SEEK_CUR && whence != SEEK_END)
-        return EINVAL;
-        
     off_t new_pos;
-    if (whence == SEEK_SET)
-        new_pos = pos;
-    else if (whence == SEEK_CUR)
+    int result;
+    struct stat *file_stat = NULL; 
+
+    switch(whence){
+        case SEEK_SET:
+        new_pos =pos;
+        break;
+
+        case SEEK_CUR:
         new_pos = curproc->p_filetable->files[fd]->file_offset + pos;
-    //else
-        //new_pos = /*TODO:end OF file*/ + pos;
-        
+        break;
+
+        case SEEK_END:
+        result = VOP_STAT(curproc->p_filetable->files[fd]->file_vnode, file_stat); 
+        if(result)
+            return result;
+        new_pos = file_stat->st_size + pos;
+        break;
+
+        default :
+        return EINVAL;
+    }
+
     if (new_pos < 0)
         return EINVAL;
         
-    if (VOP_ISSEEKABLE(curproc->p_filetable->files[fd]->file_vnode))
+    if (!VOP_ISSEEKABLE(curproc->p_filetable->files[fd]->file_vnode))
         return ESPIPE;
         
     curproc->p_filetable->files[fd]->file_offset = new_pos;

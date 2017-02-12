@@ -10,7 +10,8 @@ struct file{
         const char *filename;
         struct vnode *file_vnode;
         int file_refcount;
-        mode_t mode;
+        int file_flags;
+        mode_t file_mode;
         unsigned int file_offset;
         struct lock *file_lock;
 };
@@ -24,7 +25,7 @@ struct filetable{
 struct filetable* ft_create(void);
 void ft_destroy(struct filetable*);
 int ft_add(struct filetable* ft, struct file* file, int* fd); 
-int file_create(const char* filename, struct vnode* file_vnode, mode_t file_mode, struct file** ret_file);
+int file_create(const char* filename, struct vnode* file_vnode, int flags, mode_t file_mode, struct file** ret_file);
 void file_destroy(struct file* fl);
 int ft_init(struct filetable *ft);
 int ft_remove(struct filetable* ft, int fd);

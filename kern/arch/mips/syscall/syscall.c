@@ -149,6 +149,7 @@ syscall(struct trapframe *tf)
         copyin((const_userptr_t) tf->tf_sp+16,&ar3, sizeof(uint32_t));
         err = lseek(/*int fd*/tf->tf_a0, /*off_t pos*/(off_t) ar2,
              /*int whence*/ ar3, &retval64);
+        break; 
 
         case SYS_dup2:
         err = dup2(/*int oldfd*/tf->tf_a0, /*int newfd*/ tf->tf_a1, &retval);
