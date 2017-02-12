@@ -31,9 +31,6 @@ open(const char *filename, int flags, mode_t mode, int32_t *retval)
     if(result)
         return result;
 
-   // if(filename == NULL || strlen(filename) == 0)
-   //     return EFAULT;
-
     result = vfs_open(buff, flags, mode,  &new_vnode);
     if(result)
         return result;
@@ -64,9 +61,6 @@ open_ft(const char *filename, int flags, mode_t mode, int32_t *retval, struct fi
 
     if(filename == NULL)
         return EFAULT;
-
-    if((flags != O_RDONLY && flags != O_RDWR && flags != O_WRONLY) || strlen(filename) == 0)
-        return EINVAL;
 
     result = vfs_open((char *)filename, flags, mode,  &new_vnode);
     if(result)
@@ -133,7 +127,7 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
     if (buf == NULL)
         return EFAULT;
     
-    // Create struct uio (which also needs a struct iovec) so that VOP_READ 
+    // Create struct uio (which also needs a struct iovec) so that VOP_WRITE 
     // can be called
     struct uio write_uio;
     struct iovec write_iovec;
@@ -217,9 +211,6 @@ chdir(const char *pathname)
     result = copyinstr((const_userptr_t)pathname, buff, PATH_MAX, NULL);
     if(result)
         return result;
-    
-    //if(strlen(pathname) == 0)
-    //    return EINVAL;
 
     result = vfs_chdir(buff);
     if(result)
@@ -252,9 +243,15 @@ __getcwd(char *buf, size_t buflen, int32_t *retval)
 int
 dup2(int oldfd, int newfd, int32_t *retval)
 {
+    int result;
     if (oldfd < 0 || oldfd >= OPEN_MAX || newfd < 0 || newfd >= OPEN_MAX)
         return EBADF; 
-    
+
+    if(oldfd == newfd){
+        *retval = newfd;        
+        return 0;
+    }
+
     if(curproc->p_filetable->files[oldfd] == NULL)
         return EBADF;
         
@@ -263,9 +260,11 @@ dup2(int oldfd, int newfd, int32_t *retval)
         return 0;
     }
        
-    if (curproc->p_filetable->files[newfd] != NULL)
-        if (close(newfd))
-            return -1;
+    if (curproc->p_filetable->files[newfd] != NULL){
+        result = close(newfd);
+        if(result)
+            return result;
+    }
     
     curproc->p_filetable->files[newfd] = curproc->p_filetable->files[oldfd];
     curproc->p_filetable->files[newfd]->file_refcount++;
