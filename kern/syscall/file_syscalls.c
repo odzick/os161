@@ -102,11 +102,10 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
     result =VOP_READ(curproc->p_filetable->files[fd]->file_vnode, &read_uio);
     if (result)
         return result;
-    
+        
+    // Set new file_offset and return the difference 
     off_t prev_offset = curproc->p_filetable->files[fd]->file_offset;
-    
     curproc->p_filetable->files[fd]->file_offset = read_uio.uio_offset;
-    
     *retval = curproc->p_filetable->files[fd]->file_offset - prev_offset;
         
     return 0;
@@ -137,11 +136,10 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
     result = VOP_WRITE(curproc->p_filetable->files[fd]->file_vnode, &write_uio);
     if (result)
         return result; 
-    
+        
+    // Set new file_offset and return the difference
     off_t prev_offset = curproc->p_filetable->files[fd]->file_offset;
-   
     curproc->p_filetable->files[fd]->file_offset = write_uio.uio_offset;
-    
     *retval = curproc->p_filetable->files[fd]->file_offset - prev_offset;
         
     return 0;
