@@ -24,15 +24,20 @@ open(const char *filename, int flags, mode_t mode, int32_t *retval)
     struct file *new_file = NULL;
     int fd;
     int result;
+    char buff[PATH_MAX];
 
-    if(filename == NULL)
-        return EFAULT;
-
-    result = vfs_open((char *)filename, flags, mode,  &new_vnode);
+    result = copyinstr((const_userptr_t)filename, buff, PATH_MAX, NULL);
     if(result)
         return result;
 
-    result = file_create(filename, new_vnode, flags, mode, &new_file);
+   // if(filename == NULL || strlen(filename) == 0)
+   //     return EFAULT;
+
+    result = vfs_open(buff, flags, mode,  &new_vnode);
+    if(result)
+        return result;
+
+    result = file_create(buff, new_vnode, flags, mode, &new_file);
     if(result)
         return result;
 
@@ -59,6 +64,9 @@ open_ft(const char *filename, int flags, mode_t mode, int32_t *retval, struct fi
     if(filename == NULL)
         return EFAULT;
 
+    if((flags != O_RDONLY && flags != O_RDWR && flags != O_WRONLY) || strlen(filename) == 0)
+        return EINVAL;
+
     result = vfs_open((char *)filename, flags, mode,  &new_vnode);
     if(result)
         return result;
@@ -83,7 +91,7 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
         
-    if (curproc->p_filetable->files[fd]->file_flags == O_WRONLY)
+    if ((curproc->p_filetable->files[fd]->file_flags & 3) == O_WRONLY)
         return EBADF;
         
     if (buf == NULL)
@@ -118,7 +126,7 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
         
-    if (curproc->p_filetable->files[fd]->file_flags == O_RDONLY) 
+    if ((curproc->p_filetable->files[fd]->file_flags & 3) == O_RDONLY) 
         return EBADF;
         
     if (buf == NULL)
@@ -200,14 +208,19 @@ close(int fd)
 }
 
 int
-chdir(char *pathname)
+chdir(const char *pathname)
 {
     int result;
+    char buff[PATH_MAX];
 
-    if(pathname == NULL)
-        return EFAULT;
+    result = copyinstr((const_userptr_t)pathname, buff, PATH_MAX, NULL);
+    if(result)
+        return result;
+    
+    //if(strlen(pathname) == 0)
+    //    return EINVAL;
 
-    result = vfs_chdir(pathname);
+    result = vfs_chdir(buff);
     if(result)
         return result;
 
