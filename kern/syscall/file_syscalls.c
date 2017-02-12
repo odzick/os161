@@ -24,9 +24,18 @@ open(const char *filename, int flags, mode_t mode, int32_t *retval)
     struct file *new_file = NULL;
     int fd;
     int result;
+    size_t got;
 
     if(filename == NULL)
         return EFAULT;
+        
+    char *buf = (char *)kmalloc(PATH_MAX*sizeof(char));
+    if (buf == NULL)
+        return EFAULT;
+        
+    result = copyinstr((const_userptr_t)filename, buf, PATH_MAX,&got);
+    if (result)
+         return EFAULT;
 
     result = vfs_open((char *)filename, flags, mode,  &new_vnode);
     if(result)
