@@ -37,6 +37,7 @@
 #include <syscall.h>
 #include <file_syscalls.h>
 #include <endian.h>
+#include <lib.h>
 #include <copyinout.h>
 
 
@@ -84,7 +85,8 @@ syscall(struct trapframe *tf)
 	int callno;
 	int32_t retval;
 	uint32_t ar3;
-	uint64_t ar2, retval64;
+	uint64_t ar2;
+    off_t retval64;
 	int err;
 
 	KASSERT(curthread != NULL);
@@ -148,7 +150,7 @@ syscall(struct trapframe *tf)
         join32to64(tf->tf_a2, tf->tf_a3, &ar2);
         copyin((const_userptr_t) tf->tf_sp+16,&ar3, sizeof(uint32_t));
         err = lseek(/*int fd*/tf->tf_a0, /*off_t pos*/(off_t) ar2,
-             /*int whence*/ ar3, &retval64);
+             /*int whence*/ ar3, &retval64); 
         break; 
 
         case SYS_dup2:
@@ -171,7 +173,10 @@ syscall(struct trapframe *tf)
 		tf->tf_v0 = err;
 		tf->tf_a3 = 1;      /* signal an error */
 	}
-	else if (callno == SYS_lseek)/*Do nothing, registers already set in lseek case*/;
+	else if (callno == SYS_lseek){
+        split64to32(retval64, &tf->tf_v0, &tf->tf_v1); //Split return into v0 and v1
+        tf->tf_a3 = 0; //Signal no error
+    }
 	else {
 		/* Success. */
 		tf->tf_v0 = retval;

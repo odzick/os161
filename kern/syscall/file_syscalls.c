@@ -141,7 +141,7 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
 
 
 int
-lseek(int fd, off_t pos, int whence, uint64_t *retval)
+lseek(int fd, off_t pos, int whence, off_t *retval)
 {
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
         return EBADF;
