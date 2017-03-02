@@ -83,6 +83,76 @@ child_entry(void *vtf, unsigned long junk)
 
     enter_forked_process(&mytf);
 }
+
+int
+execv(const char *program, char **args)
+{
+    int result, argc;
+    char *kernbuf;
+    struct addrspace *new_as;
+    struct vnode *v;
+	vaddr_t entrypoint, stackptr;
+    
+    kernbuf = kmalloc(sizeof(void*));
+    
+    // Check the first arg to see if it's safe, 
+    result = copyin((const_userptr_t) args, kernbuf, 4);
+    if (result){
+        kfree(kernbuf);
+        return result;
+    }
+    kfree(kernbuf);
+    
+    arc = 0;
+    while (args[argc] != NULL)
+        argc++;
+        
+    // TODO: some checks before copyinstr()
+    
+    result = copyinstr((const_userptr_t) program, kernbuf, /*idk*/, /*idk*/)
+    if (result);
+        //TODO: Error stuff
+        
+    result = vfs_open(program, O_RDONLY, 0, &v);
+    if (result);
+        //TODO: Error stuff
+        
+    /* Create a new address space. */
+	new_as = as_create();
+	if (new_as == NULL) {
+		vfs_close(v);
+		return ENOMEM;
+	}
+	
+	curproc->p_addrspace = new_as;
+	as_activate();
+	
+	/* Load the executable. */
+	result = load_elf(v, &entrypoint);
+	if (result) {
+		/* p_addrspace will go away when curproc is destroyed */
+		vfs_close(v);
+		return result;
+	}
+
+	/* Done with the file now. */
+	vfs_close(v);
+     
+     
+    /* Define the user stack in the address space */
+	result = as_define_stack(curproc->p_addrspace, &stackptr);
+	if (result) {
+		/* p_addrspace will go away when curproc is destroyed */
+		return result;
+	}
+	
+	/* Warp to user mode. */
+	// TODO: Fix these args
+	enter_new_process(argc, NULL /*userspace addr of argv*/,
+			  NULL /*userspace addr of environment*/,
+			  stackptr, entrypoint);
+}
+
 /*
 int
 waitpid(pid_t pid, int *status, int options, pid_t *retval)
