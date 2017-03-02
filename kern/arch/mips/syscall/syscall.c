@@ -125,6 +125,10 @@ syscall(struct trapframe *tf)
         err = getpid(&retval);
         break;
 
+        case SYS__exit:
+        _exit(tf->tf_a0);
+        break;
+
 	    case SYS_open:
 	    err = open(/*const char *filename*/(char *)tf->tf_a0, 
 	        /*int flags*/tf->tf_a1, /*mode_t mode*/ tf->tf_a2, &retval);
