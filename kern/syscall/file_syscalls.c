@@ -188,7 +188,6 @@ lseek(int fd, off_t pos, int whence, off_t *retval)
     lock_release(curproc->p_filetable->ft_lock);
 
     lock_acquire(curproc->p_filetable->files[fd]->file_lock);
-
     switch(whence){
         case SEEK_SET:
         new_pos =pos;

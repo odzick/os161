@@ -455,3 +455,10 @@ optfile net	test/nettest.c
 ########################################
 file        vfs/filetable.c
 file        syscall/file_syscalls.c
+
+########################################
+#                                      #
+#           ADDED for ASST5            #
+#                                      #
+########################################
+file        syscall/proc_syscalls.c

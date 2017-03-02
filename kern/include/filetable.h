@@ -29,5 +29,5 @@ int file_create(const char* filename, struct vnode* file_vnode, int flags, mode_
 void file_destroy(struct file* fl);
 int ft_init(struct filetable *ft);
 int ft_remove(struct filetable* ft, int fd);
-//int ft_copy(struct filetable* ft, struct filetable* new_ft);
+int ft_copy(struct filetable* ft, struct filetable* new_ft);
 #endif /* _FILETABLE_H_ */

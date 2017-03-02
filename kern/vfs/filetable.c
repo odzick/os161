@@ -61,7 +61,6 @@ ft_add(struct filetable* ft, struct file* file, int* fd)
    int i;
     
     lock_acquire(ft->ft_lock);
-
     for(i = 0; i < OPEN_MAX; i++){
         if(ft->files[i] == NULL){
             ft->files[i] = file;
@@ -71,6 +70,7 @@ ft_add(struct filetable* ft, struct file* file, int* fd)
         }    
     }
     lock_release(ft->ft_lock);
+
     return EMFILE;
 }
 
@@ -120,7 +120,7 @@ file_destroy(struct file* fl)
     lock_destroy(fl->file_lock);
     kfree(fl);
 }
-/*
+
 int
 ft_copy(struct filetable* ft, struct filetable* new_ft){
     int i;
@@ -128,11 +128,16 @@ ft_copy(struct filetable* ft, struct filetable* new_ft){
     KASSERT(ft != NULL);
     KASSERT(new_ft != NULL);
 
-    for(int i = 0; i < OPEN_MAX; i++){
-        if(ft->files[i] != NULL){
-            int fd = ft_add(new_ft, ft->files[i]);
-            new_ft->files[fd]->file_refcount++;
+    lock_acquire(ft->ft_lock);
+    lock_acquire(new_ft->ft_lock);
+    for(i = 0; i < OPEN_MAX; i++){
+        new_ft->files[i] = ft->files[i];
+        if(new_ft->files[i] != NULL){
+            new_ft->files[i]->file_refcount++;
         }
     }
+    lock_release(ft->ft_lock);
+    lock_release(new_ft->ft_lock);
+
+    return 0;
 }
-*/

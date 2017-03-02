@@ -36,6 +36,7 @@
 #include <current.h>
 #include <syscall.h>
 #include <file_syscalls.h>
+#include <proc_syscalls.h>
 #include <endian.h>
 #include <lib.h>
 #include <copyinout.h>
@@ -115,7 +116,11 @@ syscall(struct trapframe *tf)
 		err = sys___time((userptr_t)tf->tf_a0,
 				 (userptr_t)tf->tf_a1);
 		break;
-    
+
+        case SYS_fork:
+        err = fork(tf, &retval);
+        break;
+
 	    case SYS_open:
 	    err = open(/*const char *filename*/(char *)tf->tf_a0, 
 	        /*int flags*/tf->tf_a1, /*mode_t mode*/ tf->tf_a2, &retval);
