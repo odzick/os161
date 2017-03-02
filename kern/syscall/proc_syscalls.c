@@ -18,15 +18,14 @@
 #include <machine/trapframe.h>
 #include <addrspace.h>
 
-//TODO associated generating and reclaiming pid's
-/*
+//TODO code to generate reasonable pids that won't run out 
 int
 getpid(pid_t *retval)
 {
     *retval = curproc->p_pid;
     return 0;
 }
-*/
+
 int
 fork(struct trapframe *tf, pid_t *retval)
 {
@@ -65,8 +64,7 @@ fork(struct trapframe *tf, pid_t *retval)
         kfree(new_tf);
         return result;
     }
-    //TODO return CHILD PId
-    *retval = 0;
+    *retval = new_proc->p_pid;
     return 0;
 }
 
@@ -83,4 +81,10 @@ child_entry(void *vtf, unsigned long junk)
 
     enter_forked_process(&mytf);
 }
+/*
+void
+_exit(int exitcode)
+{
 
+}
+*/

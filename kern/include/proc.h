@@ -39,6 +39,7 @@
 #include <spinlock.h>
 #include <thread.h> /* required for struct threadarray */
 #include <filetable.h> /* required for struct filetable */
+#include <types.h>
 
 struct addrspace;
 struct vnode;
@@ -48,6 +49,7 @@ struct vnode;
  */
 struct proc {
 	char *p_name;			/* Name of this process */
+    pid_t p_pid;            /* this processes pid */
 	struct spinlock p_lock;		/* Lock for this structure */
 	struct threadarray p_threads;	/* Threads in this process */
 
@@ -84,5 +86,6 @@ struct addrspace *proc_getas(void);
 /* Change the address space of the current process, and return the old one. */
 struct addrspace *proc_setas(struct addrspace *);
 
+pid_t proc_generate_pid(void);
 
 #endif /* _PROC_H_ */

@@ -53,6 +53,7 @@
  * The process for the kernel; this holds all the kernel-only threads.
  */
 struct proc *kproc;
+pid_t PID_COUNTER = 0;
 
 /*
  * Create a proc structure.
@@ -76,6 +77,7 @@ proc_create(const char *name)
 	threadarray_init(&proc->p_threads);
 	spinlock_init(&proc->p_lock);
     proc->p_filetable = ft_create();
+    proc->p_pid = proc_generate_pid();
 
 	/* VM fields */
 	proc->p_addrspace = NULL;
@@ -84,6 +86,12 @@ proc_create(const char *name)
 	proc->p_cwd = NULL;
 
 	return proc;
+}
+
+pid_t 
+proc_generate_pid()
+{
+    return PID_COUNTER++ % PID_MAX;
 }
 
 /*
