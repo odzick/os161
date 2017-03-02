@@ -78,6 +78,7 @@ proc_create(const char *name)
 	spinlock_init(&proc->p_lock);
     proc->p_filetable = ft_create();
     proc->p_pid = proc_generate_pid();
+    proc->p_exit_status = 0;
 
 	/* VM fields */
 	proc->p_addrspace = NULL;
@@ -192,6 +193,7 @@ proc_bootstrap(void)
 	if (kproc == NULL) {
 		panic("proc_create for kproc failed\n");
 	}
+    //ft_init(kproc->p_filetable);
 }
 
 /*

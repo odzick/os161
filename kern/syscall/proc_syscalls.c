@@ -55,6 +55,7 @@ fork(struct trapframe *tf, pid_t *retval)
     /* copy current trapframe */
     new_tf = kmalloc(sizeof(struct trapframe));
     if (new_tf==NULL){
+        proc_destroy(new_proc); 
         return ENOMEM;
     }
     *new_tf = *tf;
@@ -62,6 +63,7 @@ fork(struct trapframe *tf, pid_t *retval)
     result = thread_fork(new_proc->p_name, new_proc, child_entry, (void *)new_tf, 0);
     if (result){
         kfree(new_tf);
+        proc_destroy(new_proc); 
         return result;
     }
     *retval = new_proc->p_pid;
@@ -172,9 +174,16 @@ execv(const char *program, char **args)
 }
 
 /*
+int
+waitpid(pid_t pid, int *status, int options, pid_t *retval)
+{
+    return 0;
+}
+*/
 void
 _exit(int exitcode)
 {
-
+    curproc->p_exit_status = 1;
+    curproc->p_exit_code = exitcode;
+    thread_exit();
 }
-*/

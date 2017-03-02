@@ -50,6 +50,8 @@ struct vnode;
 struct proc {
 	char *p_name;			/* Name of this process */
     pid_t p_pid;            /* this processes pid */
+    int p_exit_status;
+    int p_exit_code;
 	struct spinlock p_lock;		/* Lock for this structure */
 	struct threadarray p_threads;	/* Threads in this process */
 
