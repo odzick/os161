@@ -91,7 +91,7 @@ execv(const char *program, char **args)
     struct vnode *v;
 	vaddr_t entrypoint, stackptr;
     
-    kernbuf = kmalloc(sizeof(void*));
+    kernbuf = (char *) kmalloc(sizeof(void*));
     
     // Check the first arg to see if it's safe, 
     result = copyin((const_userptr_t) args, kernbuf, 4);
@@ -105,9 +105,14 @@ execv(const char *program, char **args)
     while (args[argc] != NULL)
         argc++;
         
+    kernbuf = (char *)kmalloc(PATH_MAX*sizeof(char));
+    if (kernbuf == NULL);
+        //TODO: Errors
+    
+        
     // TODO: some checks before copyinstr()
     
-    result = copyinstr((const_userptr_t) program, kernbuf, /*idk*/, /*idk*/)
+    result = copyinstr((const_userptr_t) program, kernbuf, PATH_MAX, /*idk*/)
     if (result);
         //TODO: Error stuff
         
@@ -119,7 +124,18 @@ execv(const char *program, char **args)
 	new_as = as_create();
 	if (new_as == NULL) {
 		vfs_close(v);
-		return ENOMEM;
+		retu
+		rn ENOMEM;
+	}
+	
+	int i = 0;
+	
+	// Copy args to kernel
+	while (args[i] != NULL){
+	    result = copyinstr((const_userptr_t) args[i], /*copy where?*/, /*idk*/, /*idk*/);
+	    if (result);
+	    //TODO: Error stuff
+	    i++;
 	}
 	
 	curproc->p_addrspace = new_as;
@@ -133,7 +149,7 @@ execv(const char *program, char **args)
 		return result;
 	}
 
-	/* Done with the file now. */
+	/* Done with the file now. TODO: Is this the right spot?*/
 	vfs_close(v);
      
      
@@ -143,6 +159,10 @@ execv(const char *program, char **args)
 		/* p_addrspace will go away when curproc is destroyed */
 		return result;
 	}
+	
+	// TODO: Copy arguments to new address space
+	
+	// TODO: Copy pointers to argv
 	
 	/* Warp to user mode. */
 	// TODO: Fix these args
