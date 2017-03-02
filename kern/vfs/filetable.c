@@ -59,15 +59,18 @@ int
 ft_add(struct filetable* ft, struct file* file, int* fd) 
 {
    int i;
+    
+    lock_acquire(ft->ft_lock);
 
     for(i = 0; i < OPEN_MAX; i++){
         if(ft->files[i] == NULL){
             ft->files[i] = file;
             *fd = i;
+            lock_release(ft->ft_lock);
             return 0;
         }    
     }
-
+    lock_release(ft->ft_lock);
     return EMFILE;
 }
 
@@ -77,8 +80,12 @@ ft_remove(struct filetable* ft, int fd)
     if(fd < 3 || fd > (OPEN_MAX-1))
         return EBADF; 
 
-    if(ft->files[fd] == NULL)
+    lock_acquire(ft->ft_lock);
+
+    if(ft->files[fd] == NULL){
+        lock_release(ft->ft_lock);
         return EBADF;
+    }
 
     /* need to leave vnode open if another ref exists */
     if(ft->files[fd]->file_refcount == 1)
@@ -87,6 +94,7 @@ ft_remove(struct filetable* ft, int fd)
     ft->files[fd]->file_refcount--;
     ft->files[fd] = NULL;
 
+    lock_release(ft->ft_lock);
     return 0;
 }
 
@@ -112,3 +120,19 @@ file_destroy(struct file* fl)
     lock_destroy(fl->file_lock);
     kfree(fl);
 }
+/*
+int
+ft_copy(struct filetable* ft, struct filetable* new_ft){
+    int i;
+
+    KASSERT(ft != NULL);
+    KASSERT(new_ft != NULL);
+
+    for(int i = 0; i < OPEN_MAX; i++){
+        if(ft->files[i] != NULL){
+            int fd = ft_add(new_ft, ft->files[i]);
+            new_ft->files[fd]->file_refcount++;
+        }
+    }
+}
+*/

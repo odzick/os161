@@ -89,30 +89,42 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
 {
     int result; 
 
-    if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
-        return EBADF;
-        
-    if ((curproc->p_filetable->files[fd]->file_flags & 3) == O_WRONLY)
-        return EBADF;
-        
     if (buf == NULL)
         return EFAULT;
-    
+
+    lock_acquire(curproc->p_filetable->ft_lock);
+    if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL){
+        lock_release(curproc->p_filetable->ft_lock);
+        return EBADF;
+    }
+    lock_release(curproc->p_filetable->ft_lock);
+
+    lock_acquire(curproc->p_filetable->files[fd]->file_lock);
+
+    if ((curproc->p_filetable->files[fd]->file_flags & 3) == O_WRONLY){
+        lock_release(curproc->p_filetable->files[fd]->file_lock);
+        return EBADF;
+    }
+        
     /* Create struct uio so that VOP_READ can be called */
     struct uio read_uio;
     struct iovec read_iovec;
 
     uio_init(&read_iovec, &read_uio, buf, buflen, curproc->p_filetable->files[fd]->file_offset, UIO_READ);
     
-    result =VOP_READ(curproc->p_filetable->files[fd]->file_vnode, &read_uio);
-    if (result)
+    result = VOP_READ(curproc->p_filetable->files[fd]->file_vnode, &read_uio);
+    if (result){
+        lock_release(curproc->p_filetable->files[fd]->file_lock);
         return result;
-        
+    } 
+
     /* Set new file_offset and return the difference */
     off_t prev_offset = curproc->p_filetable->files[fd]->file_offset;
     curproc->p_filetable->files[fd]->file_offset = read_uio.uio_offset;
     *retval = curproc->p_filetable->files[fd]->file_offset - prev_offset;
-        
+
+    lock_release(curproc->p_filetable->files[fd]->file_lock);
+
     return 0;
 }
 
@@ -124,27 +136,39 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
     struct uio write_uio;
     struct iovec write_iovec;
 
-    if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
-        return EBADF;
-        
-    if ((curproc->p_filetable->files[fd]->file_flags & 3) == O_RDONLY) 
-        return EBADF;
-        
     if (buf == NULL)
         return EFAULT;
     
+    lock_acquire(curproc->p_filetable->ft_lock);
+    if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL){
+        lock_release(curproc->p_filetable->ft_lock);
+        return EBADF;
+    }
+    lock_release(curproc->p_filetable->ft_lock);
+
+    lock_acquire(curproc->p_filetable->files[fd]->file_lock);
+
+    if ((curproc->p_filetable->files[fd]->file_flags & 3) == O_RDONLY) {
+        lock_release(curproc->p_filetable->files[fd]->file_lock);
+        return EBADF;
+    }
+
     /* Create struct uio so that VOP_WRITE can be called */
     uio_init(&write_iovec, &write_uio, buf, nbytes, curproc->p_filetable->files[fd]->file_offset, UIO_WRITE);
 
     result = VOP_WRITE(curproc->p_filetable->files[fd]->file_vnode, &write_uio);
-    if (result)
+    if (result){
+        lock_release(curproc->p_filetable->files[fd]->file_lock);
         return result; 
+    }
         
     /* Set new file_offset and return the difference */
     off_t prev_offset = curproc->p_filetable->files[fd]->file_offset;
     curproc->p_filetable->files[fd]->file_offset = write_uio.uio_offset;
     *retval = curproc->p_filetable->files[fd]->file_offset - prev_offset;
         
+    lock_release(curproc->p_filetable->files[fd]->file_lock);
+
     return 0;
 }
 
@@ -156,8 +180,14 @@ lseek(int fd, off_t pos, int whence, off_t *retval)
     int result;
     struct stat file_stat; 
 
-    if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL)
+    lock_acquire(curproc->p_filetable->ft_lock);
+    if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL){
+        lock_release(curproc->p_filetable->ft_lock);
         return EBADF;
+    }
+    lock_release(curproc->p_filetable->ft_lock);
+
+    lock_acquire(curproc->p_filetable->files[fd]->file_lock);
 
     switch(whence){
         case SEEK_SET:
@@ -170,24 +200,33 @@ lseek(int fd, off_t pos, int whence, off_t *retval)
 
         case SEEK_END:
         result = VOP_STAT(curproc->p_filetable->files[fd]->file_vnode, &file_stat); 
-        if(result)
+        if(result){
+            lock_release(curproc->p_filetable->files[fd]->file_lock);
             return result;
+        }
         new_pos = file_stat.st_size + pos;
         break;
 
         default :
+        lock_release(curproc->p_filetable->files[fd]->file_lock);
         return EINVAL;
     }
 
-    if (new_pos < 0)
+    if (new_pos < 0){
+        lock_release(curproc->p_filetable->files[fd]->file_lock);
         return EINVAL;
+    }
         
-    if (!VOP_ISSEEKABLE(curproc->p_filetable->files[fd]->file_vnode))
+    if (!VOP_ISSEEKABLE(curproc->p_filetable->files[fd]->file_vnode)){
+        lock_release(curproc->p_filetable->files[fd]->file_lock);
         return ESPIPE;
+    }
         
     curproc->p_filetable->files[fd]->file_offset = new_pos;
     *retval =  curproc->p_filetable->files[fd]->file_offset;
         
+    lock_release(curproc->p_filetable->files[fd]->file_lock);
+
     return 0;
 }
 
@@ -248,7 +287,7 @@ dup2(int oldfd, int newfd, int32_t *retval)
     int result;
 
     if (oldfd < 0 || oldfd >= OPEN_MAX || newfd < 0 || newfd >= OPEN_MAX)
-        return EBADF; 
+        return EBADF;
 
     if(oldfd == newfd){
         *retval = newfd;        
