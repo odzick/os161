@@ -48,12 +48,19 @@
 #include <current.h>
 #include <addrspace.h>
 #include <vnode.h>
+#include <kern/errno.h>
 
 /*
  * The process for the kernel; this holds all the kernel-only threads.
  */
 struct proc *kproc;
-pid_t PID_COUNTER = 0;
+
+/*
+ * array structure to keep track of processes and their pids.
+ */
+DECLARRAY(proc, static __UNUSED inline);
+DEFARRAY(proc, static __UNUSED inline);
+static struct procarray proc_table;
 
 /*
  * Create a proc structure.
@@ -77,7 +84,6 @@ proc_create(const char *name)
 	threadarray_init(&proc->p_threads);
 	spinlock_init(&proc->p_lock);
     proc->p_filetable = ft_create();
-    proc->p_pid = proc_generate_pid();
     proc->p_exit_status = 0;
 
 	/* VM fields */
@@ -89,10 +95,34 @@ proc_create(const char *name)
 	return proc;
 }
 
-pid_t 
-proc_generate_pid()
+int
+proc_add_pidtable(struct proc* p)
 {
-    return PID_COUNTER++ % PID_MAX;
+   struct proc* current_p = NULL;
+   unsigned int current_pid;
+
+   for(current_pid = 0; current_pid < PID_MAX; current_pid++){
+
+       if(procarray_num(&proc_table) == 0){
+           procarray_add(&proc_table, p, &current_pid);
+           p->p_pid = current_pid;
+           return 0;
+       }
+
+       if(current_p == NULL){
+           procarray_add(&proc_table, p, &current_pid);
+           p->p_pid = current_pid;
+           return 0;
+       }
+
+       if(current_p->p_exit_status == 1){
+           proc_destroy(current_p);
+           procarray_add(&proc_table, p, &current_pid);
+           p->p_pid = current_pid;
+           return 0;
+       }
+   } 
+   return ENOMEM;
 }
 
 /*
@@ -206,16 +236,23 @@ struct proc *
 proc_create_runprogram(const char *name)
 {
 	struct proc *newproc;
+    int result;
 
 	newproc = proc_create(name);
 	if (newproc == NULL) {
 		return NULL;
 	}
 
-    int result = ft_init(newproc->p_filetable);
+    result = ft_init(newproc->p_filetable);
     if(result){
         proc_destroy(newproc);
 		return NULL;
+    }
+
+    result = proc_add_pidtable(newproc);
+    if(result){
+        proc_destroy(newproc);
+        return NULL;
     }
 
 	/* VM fields */
