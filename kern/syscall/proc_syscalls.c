@@ -250,7 +250,7 @@ execv(const char *program, char **args)
 	
 	/* Warp to user mode. */
 	// TODO: Fix these args
-	enter_new_process(j, NULL /*userspace addr of argv*/,
+	enter_new_process(j, (userptr_t) stackptr,
 			  NULL /*userspace addr of environment*/,
 			  stackptr, entrypoint);
     return EINVAL;
