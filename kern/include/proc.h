@@ -40,9 +40,12 @@
 #include <thread.h> /* required for struct threadarray */
 #include <filetable.h> /* required for struct filetable */
 #include <types.h>
+#include <synch.h>
 
 struct addrspace;
 struct vnode;
+struct lock *execlock;
+
 
 /*
  * Process structure.

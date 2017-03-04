@@ -194,6 +194,7 @@ proc_bootstrap(void)
 		panic("proc_create for kproc failed\n");
 	}
     //ft_init(kproc->p_filetable);
+    execlock = lock_create("execv lock");
 }
 
 /*

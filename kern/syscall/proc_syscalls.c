@@ -17,6 +17,7 @@
 #include <kern/iovec.h>
 #include <machine/trapframe.h>
 #include <addrspace.h>
+#include <synch.h>
 
 //TODO code to generate reasonable pids that won't run out 
 int
@@ -95,6 +96,8 @@ execv(const char *program, char **args)
 	vaddr_t entrypoint, stackptr;
     
     kernbuf = (char *) kmalloc(sizeof(void*));
+    
+    lock_acquire(execlock);
     
     /*
     Don't know if we need this
@@ -242,6 +245,8 @@ execv(const char *program, char **args)
 	
 	kfree(kernbuf);
     kfree(kernargs);
+    
+    lock_release(execlock);
 	
 	/* Warp to user mode. */
 	// TODO: Fix these args
