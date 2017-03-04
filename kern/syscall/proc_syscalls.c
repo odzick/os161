@@ -87,7 +87,7 @@ child_entry(void *vtf, unsigned long junk)
 int
 execv(const char *program, char **args)
 {
-    int result, argc, i, j, len;
+    int result, i, j, len;
     char *kernbuf;
     struct addrspace *new_as;
     struct vnode *v;
@@ -115,7 +115,7 @@ execv(const char *program, char **args)
     if (kernbuf == NULL)
         return ENOMEM;
     
-    result = copyinstr((const_userptr_t) program, kernbuf, PATH_MAX, &size)
+    result = copyinstr((const_userptr_t) program, kernbuf, PATH_MAX, &size);
     if (result){
         kfree(kernbuf);
         return EFAULT;
@@ -137,7 +137,8 @@ execv(const char *program, char **args)
     // Copy arguments to kernel
     while (args[i] != NULL) {
         kernargs[i] = (char *) kmalloc(sizeof(char) * PATH_MAX);
-        result = copyinstr((const_userptr_t) args[i], PATH_MAX), &size);
+        result = copyinstr((const_userptr_t) args[i], kernargs[i], 
+                            PATH_MAX, &size);
         if (result) {
             kfree(kernbuf);
             kfree(kernargs);
@@ -146,7 +147,7 @@ execv(const char *program, char **args)
         i++;
     }
         
-    result = vfs_open(program, O_RDONLY, 0, &v);
+    result = vfs_open((char *)program, O_RDONLY, 0, &v);
     if (result){
         kfree(kernbuf);
         kfree(kernargs);
@@ -244,7 +245,7 @@ execv(const char *program, char **args)
 	
 	/* Warp to user mode. */
 	// TODO: Fix these args
-	enter_new_process(argc, NULL /*userspace addr of argv*/,
+	enter_new_process(j, NULL /*userspace addr of argv*/,
 			  NULL /*userspace addr of environment*/,
 			  stackptr, entrypoint);
     return EINVAL;
