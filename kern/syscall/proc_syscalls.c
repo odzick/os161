@@ -147,8 +147,6 @@ int execv(const char *program, char **args)
     size_t size;
 	vaddr_t entrypoint, stackptr;
     
-    kernbuf = (char *) kmalloc(sizeof(void*));
-    
     lock_acquire(execlock);
     
     /*
