@@ -45,6 +45,8 @@
 
 struct addrspace;
 struct vnode;
+struct lock *execlock;
+
 
 /*
  * Process structure.
