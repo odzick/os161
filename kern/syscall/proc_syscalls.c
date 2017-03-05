@@ -190,7 +190,7 @@ int execv(const char *program, char **args)
         i++;
     }
         
-    result = vfs_open((char *)program, O_RDONLY, 0, &v);
+    result = vfs_open(kernbuf, O_RDONLY, 0, &v);
     if (result){
         kfree(kernbuf);
         kfree(kernargs);
