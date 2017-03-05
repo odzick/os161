@@ -99,7 +99,7 @@ waitpid(pid_t pid, int *status, int option, pid_t *retval, int from_user)
     if(pid > PID_MAX || pid < 0)
         return EINVAL;
 
-    /* only handle option 0 in this implementation */
+    /* we will only handle option 0 */
     if (option != 0 )
         return EINVAL;
 
@@ -147,8 +147,6 @@ int execv(const char *program, char **args)
     size_t size;
 	vaddr_t entrypoint, stackptr;
     
-    kernbuf = (char *) kmalloc(sizeof(void*));
-    
     lock_acquire(execlock);
     
     /*
@@ -173,7 +171,7 @@ int execv(const char *program, char **args)
     result = copyinstr((const_userptr_t) program, kernbuf, PATH_MAX, &size);
     if (result){
         kfree(kernbuf);
-        return EFAULT;
+        return result;
     }
     
     // TODO: Maybe check if size is 1
@@ -220,7 +218,7 @@ int execv(const char *program, char **args)
 		return ENOMEM;
 	}
 	
-	curproc->p_addrspace = new_as;
+    proc_setas(new_as);
 	as_activate();
 	
 	/* Load the executable. */

@@ -138,7 +138,7 @@ common_prog(int nargs, char **args)
 		proc_destroy(proc);
 		return result;
 	}
-    
+   
     int status;
     pid_t retval;
     result = waitpid(proc->p_pid, &status, 0, &retval, 0);
