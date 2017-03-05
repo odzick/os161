@@ -276,6 +276,9 @@ int execv(const char *program, char **args)
             kfree(kernargs);
 		    return result;
 	    }
+	    
+	    kernargs[j] = (char *) stackptr;
+	    kfree(currarg);
 	    j++;
 	}
 	
