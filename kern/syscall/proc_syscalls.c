@@ -20,7 +20,6 @@
 #include <kern/wait.h>
 #include <synch.h>
 
-//TODO code to generate reasonable pids that won't run out 
 int
 getpid(pid_t *retval)
 {
@@ -89,9 +88,10 @@ child_entry(void *vtf, unsigned long junk)
 
 
 int
-waitpid(pid_t pid, int *status, pid_t *retval)
+waitpid(pid_t pid, int *status, int option, pid_t *retval, int from_user)
 {
     struct proc* waitproc;
+    int result;
 
     if(curproc->p_pid == pid)
         return EINVAL;
@@ -99,8 +99,9 @@ waitpid(pid_t pid, int *status, pid_t *retval)
     if(pid > PID_MAX || pid < 0)
         return EINVAL;
 
-   // if (options != 0 && options != WNOHANG)
-   //     return EINVAL;
+    /* only handle option 0 in this implementation */
+    if (option != 0 )
+        return EINVAL;
 
     waitproc = get_proc(pid);
     if (waitproc == NULL)
@@ -116,12 +117,23 @@ waitpid(pid_t pid, int *status, pid_t *retval)
         cv_wait(waitproc->p_cv, waitproc->p_waitlock);  
     }
 
-    // TODO handle case where child does not exit
-    *status = _MKWAIT_EXIT(waitproc->p_exit_code); 
+    if(from_user){
+        result = copyout(&waitproc->p_exit_code, (userptr_t) status, sizeof(int));
+        if(result){
+            lock_release(waitproc->p_waitlock);
+            return result;
+        }
+    }
+    else{
+        *status = waitproc->p_exit_code; 
+    }
+
     *retval = pid;
+    proc_remove_pidtable(pid);
 
     lock_release(waitproc->p_waitlock);
 
+    //proc_destroy(waitproc);
     return 0;
 }
 
@@ -301,7 +313,7 @@ _exit(int exitcode)
 {
     lock_acquire(curproc->p_waitlock);
     curproc->p_exited = 1;
-    curproc->p_exit_code = exitcode;
+    curproc->p_exit_code = _MKWAIT_EXIT(exitcode);
     cv_signal(curproc->p_cv, curproc->p_waitlock);  
     lock_release(curproc->p_waitlock);
     thread_exit();

@@ -100,31 +100,31 @@ proc_create(const char *name)
 int
 proc_add_pidtable(struct proc* p)
 {
-   struct proc* current_p = NULL;
    unsigned int current_pid;
+   int i;
+   int table_size = procarray_num(&proc_table); 
 
-   for(current_pid = 0; current_pid < PID_MAX; current_pid++){
-
-       if(procarray_num(&proc_table) == 0){
-           procarray_add(&proc_table, p, &current_pid);
-           p->p_pid = current_pid;
-           return 0;
-       }
-
-       if(current_p == NULL){
-           procarray_add(&proc_table, p, &current_pid);
-           p->p_pid = current_pid;
-           return 0;
-       }
-
-       if(current_p->p_exited == 1){
-           proc_destroy(current_p);
-           procarray_add(&proc_table, p, &current_pid);
-           p->p_pid = current_pid;
+   for(i = 0; i < table_size; i++){
+       if( procarray_get(&proc_table, i) == NULL){
+           procarray_set(&proc_table, i, p); 
+           p->p_pid = i;
            return 0;
        }
    } 
-   return ENOMEM;
+
+   if(table_size >= PID_MAX){
+       return ENOMEM;
+   }
+
+   procarray_add(&proc_table, p, &current_pid);
+   p->p_pid = current_pid;
+   return 0;
+}
+
+void
+proc_remove_pidtable(unsigned int index)
+{
+   procarray_set(&proc_table, index, NULL); 
 }
 
 struct proc *
@@ -215,6 +215,8 @@ proc_destroy(struct proc *proc)
 	threadarray_cleanup(&proc->p_threads);
 	spinlock_cleanup(&proc->p_lock);
     ft_destroy(proc->p_filetable);
+    cv_destroy(proc->p_cv);
+    lock_destroy(proc->p_waitlock);
 
 	kfree(proc->p_name);
 	kfree(proc);
@@ -230,7 +232,7 @@ proc_bootstrap(void)
 	if (kproc == NULL) {
 		panic("proc_create for kproc failed\n");
 	}
-    //ft_init(kproc->p_filetable);
+
     execlock = lock_create("execv lock");
 }
 

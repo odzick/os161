@@ -134,7 +134,8 @@ syscall(struct trapframe *tf)
         break;
 
         case SYS_waitpid:
-        err = waitpid(/*pid_t pid */tf->tf_a0,  /*int *status */(int *)tf->tf_a1, &retval);
+        err = waitpid(/*pid_t pid */tf->tf_a0,  /*int *status */(int *)tf->tf_a1, 
+                /* int option */tf->tf_a2, &retval, /*int from_user */ 1);
         break;
 
 	    case SYS_open:
