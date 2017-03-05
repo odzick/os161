@@ -253,12 +253,6 @@ proc_create_runprogram(const char *name)
 		return NULL;
 	}
 
-    result = ft_init(newproc->p_filetable);
-    if(result){
-        proc_destroy(newproc);
-		return NULL;
-    }
-
     result = proc_add_pidtable(newproc);
     if(result){
         proc_destroy(newproc);

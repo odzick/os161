@@ -127,7 +127,14 @@ common_prog(int nargs, char **args)
 	if (proc == NULL) {
 		return ENOMEM;
 	}
+
     proc->p_parent_pid = 0;
+
+    result = ft_init(proc->p_filetable);
+    if(result){
+        proc_destroy(proc);
+        return result;
+    }
 
 	result = thread_fork(args[0] /* thread name */,
 			proc /* new process */,
@@ -138,7 +145,7 @@ common_prog(int nargs, char **args)
 		proc_destroy(proc);
 		return result;
 	}
-    
+   
     int status;
     pid_t retval;
     result = waitpid(proc->p_pid, &status, 0, &retval, 0);

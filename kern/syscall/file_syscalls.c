@@ -89,9 +89,6 @@ read(int fd, void *buf, size_t buflen, int32_t *retval)
 {
     int result; 
 
-    if (buf == NULL)
-        return EFAULT;
-
     lock_acquire(curproc->p_filetable->ft_lock);
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL){
         lock_release(curproc->p_filetable->ft_lock);
@@ -136,9 +133,6 @@ write(int fd, void *buf, size_t nbytes, int32_t *retval)
     struct uio write_uio;
     struct iovec write_iovec;
 
-    if (buf == NULL)
-        return EFAULT;
-    
     lock_acquire(curproc->p_filetable->ft_lock);
     if (fd < 0 || fd >= OPEN_MAX || curproc->p_filetable->files[fd] == NULL){
         lock_release(curproc->p_filetable->ft_lock);
