@@ -212,7 +212,7 @@ proc_destroy(struct proc *proc)
 		as_destroy(as);
 	}
 
-	//threadarray_cleanup(&proc->p_threads);
+	threadarray_cleanup(&proc->p_threads);
 	spinlock_cleanup(&proc->p_lock);
     ft_destroy(proc->p_filetable);
     cv_destroy(proc->p_cv);

@@ -128,6 +128,8 @@ common_prog(int nargs, char **args)
 		return ENOMEM;
 	}
 
+    proc->p_parent_pid = 0;
+
     result = ft_init(proc->p_filetable);
     if(result){
         proc_destroy(proc);

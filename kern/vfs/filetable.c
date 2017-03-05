@@ -130,21 +130,6 @@ ft_copy(struct filetable* ft, struct filetable* new_ft){
     KASSERT(ft != NULL);
     KASSERT(new_ft != NULL);
 
-    /* 
-     * close stdin, stdout, stderr since
-     * we assime old ft had was initialized
-     * with them too
-     */
-    if(new_ft->files[0] != NULL)
-        ft_remove(new_ft, 0);
-    
-    if(new_ft->files[1] != NULL)
-        ft_remove(new_ft, 1);
-    
-    if(new_ft->files[2] != NULL)
-        ft_remove(new_ft, 2);
-    
-
     lock_acquire(ft->ft_lock);
     lock_acquire(new_ft->ft_lock);
     for(i = 0; i < OPEN_MAX; i++){
@@ -153,8 +138,8 @@ ft_copy(struct filetable* ft, struct filetable* new_ft){
             new_ft->files[i]->file_refcount++;
         }
     }
-    lock_release(ft->ft_lock);
     lock_release(new_ft->ft_lock);
+    lock_release(ft->ft_lock);
 
     return 0;
 }
