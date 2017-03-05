@@ -143,26 +143,20 @@ int execv(const char *program, char **args)
     int result, i, j, len;
     char *kernbuf;
     struct addrspace *new_as;
+    struct addrspace *old_as;
     struct vnode *v;
     size_t size;
 	vaddr_t entrypoint, stackptr;
-    
-    lock_acquire(execlock);
-    
-    /*
-    Don't know if we need this
-    
-    // Check the first arg to see if it's safe, 
-    result = copyin((const_userptr_t) args, kernbuf, 4);
-    if (result){
-        kfree(kernbuf);
-        return result;
-    }
-    kfree(kernbuf);*/
-    
-    /*arc = 0;
-    while (args[argc] != NULL)
-        argc++; */
+	
+	if (program == NULL || args == NULL)
+	    return EFAULT;
+	
+	int argc = 0;
+	
+	while(args[argc] != NULL)
+	    argc++;
+	    
+    //lock_acquire(execlock);
         
     kernbuf = (char *)kmalloc(PATH_MAX*sizeof(char));
     if (kernbuf == NULL)
@@ -173,9 +167,6 @@ int execv(const char *program, char **args)
         kfree(kernbuf);
         return EFAULT;
     }
-    
-    // TODO: Maybe check if size is 1
-    
     
     char **kernargs = (char **) kmalloc(sizeof(char**));
     
@@ -199,6 +190,8 @@ int execv(const char *program, char **args)
         }
         i++;
     }
+    
+    lock_acquire(execlock);
         
     result = vfs_open(kernbuf, O_RDONLY, 0, &v);
     if (result){
@@ -206,9 +199,10 @@ int execv(const char *program, char **args)
         kfree(kernargs);
         return result;
     }
-        
-    // TODO: Delete last address space?
-        
+    
+    /* Save old address space in case of load_elf error*/
+    old_as = curproc->p_addrspace;   
+    
     /* Create a new address space. */
 	new_as = as_create();
 	if (new_as == NULL) { 
@@ -227,15 +221,16 @@ int execv(const char *program, char **args)
 		/* p_addrspace will go away when curproc is destroyed */
 		kfree(kernbuf);
         kfree(kernargs);
+        curproc->p_addrspace = old_as;
+        as_activate();
 		vfs_close(v);
 		return result;
 	}
 
-	/* Done with the file now. TODO: Is this the right spot?*/
+	/* Done with the file now. */
 	vfs_close(v);
-     
-     
-    /* Define the user stack in the address space */
+	
+	/* Define the user stack in the address space */
 	result = as_define_stack(curproc->p_addrspace, &stackptr);
 	if (result) {
 		/* p_addrspace will go away when curproc is destroyed */
@@ -246,11 +241,10 @@ int execv(const char *program, char **args)
 	
 	j = 0;
 	
-	// TODO: Check logic for loops below
-	
 	while(kernargs[j] != NULL){
+	    // Create len and round up to nearest multiple of 4
 	    char * currarg;
-	    len = strlen(kernargs[j]) + 1;
+	    len = strlen(kernargs[j]) + 1; // Add 1 for the '\0' char
 	    
 	    int origlen = len;
 	    if (len % 4 != 0)
@@ -282,13 +276,13 @@ int execv(const char *program, char **args)
 	    j++;
 	}
 	
+	
 	if (kernargs[j] == NULL)
-	    stackptr -= 4 * sizeof(char);
-	    
+	   stackptr -= 4 * sizeof(char);
+	
 	for (int i = (j - 1); i >= 0; i--){
 	    stackptr = stackptr - sizeof(char*);
-	    result = copyout((const void *) (kernargs + i), (userptr_t) stackptr, 
-	                    (sizeof(char*)));
+	    result = copyout((const void *) (kernargs + i), (userptr_t) stackptr, (sizeof(char*)));
 	    if (result) {
 		    kfree(kernbuf);
             kfree(kernargs);
@@ -296,14 +290,14 @@ int execv(const char *program, char **args)
 	    }        
 	}
 	
+	
 	kfree(kernbuf);
     kfree(kernargs);
     
     lock_release(execlock);
 	
 	/* Warp to user mode. */
-	// TODO: Fix these args
-	enter_new_process(j, (userptr_t) stackptr,
+	enter_new_process(argc, (userptr_t) stackptr,
 			  NULL /*userspace addr of environment*/,
 			  stackptr, entrypoint);
     return EINVAL;
