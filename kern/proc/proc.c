@@ -212,7 +212,7 @@ proc_destroy(struct proc *proc)
 		as_destroy(as);
 	}
 
-	threadarray_cleanup(&proc->p_threads);
+	//threadarray_cleanup(&proc->p_threads);
 	spinlock_cleanup(&proc->p_lock);
     ft_destroy(proc->p_filetable);
     cv_destroy(proc->p_cv);
@@ -252,12 +252,6 @@ proc_create_runprogram(const char *name)
 	if (newproc == NULL) {
 		return NULL;
 	}
-
-    result = ft_init(newproc->p_filetable);
-    if(result){
-        proc_destroy(newproc);
-		return NULL;
-    }
 
     result = proc_add_pidtable(newproc);
     if(result){

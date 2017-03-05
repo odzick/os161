@@ -39,7 +39,7 @@ fork(struct trapframe *tf, pid_t *retval)
     KASSERT(new_proc != NULL);
 
     /* copy file table */
-    result = ft_copy(new_proc->p_filetable, curproc->p_filetable);
+    result = ft_copy(curproc->p_filetable, new_proc->p_filetable);
     if(result){
         proc_destroy(new_proc); 
         return result;
@@ -94,10 +94,10 @@ waitpid(pid_t pid, int *status, int option, pid_t *retval, int from_user)
     int result;
 
     if(curproc->p_pid == pid)
-        return EINVAL;
+        return ESRCH;
 
-    if(pid > PID_MAX || pid < 0)
-        return EINVAL;
+    if(pid > PID_MAX || pid <= 0)
+        return ESRCH;
 
     /* we will only handle option 0 */
     if (option != 0 )
@@ -110,22 +110,24 @@ waitpid(pid_t pid, int *status, int option, pid_t *retval, int from_user)
    lock_acquire(waitproc->p_waitlock);
    if(waitproc->p_parent_pid != curproc->p_pid){
         lock_release(waitproc->p_waitlock);
-        return EPERM;
+        return ECHILD;
    }
 
     while(waitproc->p_exited == 0){
         cv_wait(waitproc->p_cv, waitproc->p_waitlock);  
     }
 
-    if(from_user){
-        result = copyout(&waitproc->p_exit_code, (userptr_t) status, sizeof(int));
-        if(result){
-            lock_release(waitproc->p_waitlock);
-            return result;
+    if(status != NULL){
+        if(from_user){
+            result = copyout(&waitproc->p_exit_code, (userptr_t) status, sizeof(int));
+            if(result){
+                lock_release(waitproc->p_waitlock);
+                return result;
+            }
         }
-    }
-    else{
-        *status = waitproc->p_exit_code; 
+        else{
+            *status = waitproc->p_exit_code; 
+        }
     }
 
     *retval = pid;
@@ -133,7 +135,7 @@ waitpid(pid_t pid, int *status, int option, pid_t *retval, int from_user)
 
     lock_release(waitproc->p_waitlock);
 
-    //proc_destroy(waitproc);
+    proc_destroy(waitproc);
     return 0;
 }
 

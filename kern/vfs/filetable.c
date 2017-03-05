@@ -77,7 +77,7 @@ ft_add(struct filetable* ft, struct file* file, int* fd)
 int
 ft_remove(struct filetable* ft, int fd) 
 {
-    if(fd < 3 || fd > (OPEN_MAX-1))
+    if(fd < 0 || fd > (OPEN_MAX-1))
         return EBADF; 
 
     lock_acquire(ft->ft_lock);
@@ -87,9 +87,11 @@ ft_remove(struct filetable* ft, int fd)
         return EBADF;
     }
 
-    /* need to leave vnode open if another ref exists */
-    if(ft->files[fd]->file_refcount == 1)
+    /* need to leave vnode and file open if another ref exists */
+    if(ft->files[fd]->file_refcount == 1){
         vfs_close(ft->files[fd]->file_vnode);
+        file_destroy(ft->files[fd]);
+    }
 
     ft->files[fd]->file_refcount--;
     ft->files[fd] = NULL;
@@ -127,6 +129,21 @@ ft_copy(struct filetable* ft, struct filetable* new_ft){
 
     KASSERT(ft != NULL);
     KASSERT(new_ft != NULL);
+
+    /* 
+     * close stdin, stdout, stderr since
+     * we assime old ft had was initialized
+     * with them too
+     */
+    if(new_ft->files[0] != NULL)
+        ft_remove(new_ft, 0);
+    
+    if(new_ft->files[1] != NULL)
+        ft_remove(new_ft, 1);
+    
+    if(new_ft->files[2] != NULL)
+        ft_remove(new_ft, 2);
+    
 
     lock_acquire(ft->ft_lock);
     lock_acquire(new_ft->ft_lock);
