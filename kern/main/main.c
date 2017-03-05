@@ -209,7 +209,7 @@ void
 kmain(char *arguments)
 {
 	boot();
-
+    proc_add_pidtable(kproc);
 	menu(arguments);
 
 	/* Should not get here */

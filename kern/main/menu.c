@@ -41,6 +41,7 @@
 #include <sfs.h>
 #include <syscall.h>
 #include <test.h>
+#include <proc_syscalls.h>
 #include "opt-synchprobs.h"
 #include "opt-sfs.h"
 #include "opt-net.h"
@@ -126,6 +127,7 @@ common_prog(int nargs, char **args)
 	if (proc == NULL) {
 		return ENOMEM;
 	}
+    proc->p_parent_pid = 0;
 
 	result = thread_fork(args[0] /* thread name */,
 			proc /* new process */,
@@ -137,7 +139,13 @@ common_prog(int nargs, char **args)
 		return result;
 	}
     
-    while(1);
+    int status;
+    pid_t retval;
+    result = waitpid(proc->p_pid, &status, 0, &retval, 0);
+    if(result){
+		kprintf("waitpid failed: %s\n", strerror(result));
+        return result;
+    }
 
 	/*
 	 * The new process will be destroyed when the program exits...
