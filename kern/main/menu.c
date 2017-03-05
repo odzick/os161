@@ -137,8 +137,8 @@ common_prog(int nargs, char **args)
 		return result;
 	}
     
-    /* hack to stop thread interfearing with user program (asst4 only) */
     while(1);
+
 	/*
 	 * The new process will be destroyed when the program exits...
 	 * once you write the code for handling that.

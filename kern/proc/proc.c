@@ -83,8 +83,10 @@ proc_create(const char *name)
 
 	threadarray_init(&proc->p_threads);
 	spinlock_init(&proc->p_lock);
+    proc->p_cv = cv_create("procwait_cv");
+    proc->p_waitlock = lock_create("procwait_lock");
     proc->p_filetable = ft_create();
-    proc->p_exit_status = 0;
+    proc->p_exited = 0;
 
 	/* VM fields */
 	proc->p_addrspace = NULL;
@@ -115,7 +117,7 @@ proc_add_pidtable(struct proc* p)
            return 0;
        }
 
-       if(current_p->p_exit_status == 1){
+       if(current_p->p_exited == 1){
            proc_destroy(current_p);
            procarray_add(&proc_table, p, &current_pid);
            p->p_pid = current_pid;
@@ -123,6 +125,11 @@ proc_add_pidtable(struct proc* p)
        }
    } 
    return ENOMEM;
+}
+
+struct proc *
+get_proc(unsigned int pid){
+    return procarray_get(&proc_table, pid);
 }
 
 /*

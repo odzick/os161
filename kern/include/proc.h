@@ -41,6 +41,7 @@
 #include <filetable.h> /* required for struct filetable */
 #include <types.h>
 #include <array.h>
+#include <synch.h>
 
 struct addrspace;
 struct vnode;
@@ -52,8 +53,8 @@ struct proc {
 	char *p_name;			/* Name of this process */
     pid_t p_pid;            /* this processes pid */
     pid_t p_parent_pid;
-    int p_exit_status;
     int p_exit_code;
+    int p_exited;
 	struct spinlock p_lock;		/* Lock for this structure */
 	struct threadarray p_threads;	/* Threads in this process */
 
@@ -64,6 +65,8 @@ struct proc {
 	struct vnode *p_cwd;		/* current working directory */
 
     struct filetable *p_filetable; /* current working filetable */
+    struct cv *p_cv; /* used when parent process waits */
+    struct lock *p_waitlock; /* used when parent process waits */
 };
 
 /* This is the process structure for the kernel and for kernel-only threads. */
@@ -91,5 +94,7 @@ struct addrspace *proc_getas(void);
 struct addrspace *proc_setas(struct addrspace *);
 
 int proc_add_pidtable(struct proc *);
+
+struct proc *get_proc(unsigned int pid);
 
 #endif /* _PROC_H_ */

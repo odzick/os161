@@ -17,6 +17,7 @@
 #include <kern/iovec.h>
 #include <machine/trapframe.h>
 #include <addrspace.h>
+#include <kern/wait.h>
 
 //TODO code to generate reasonable pids that won't run out 
 int
@@ -33,7 +34,6 @@ fork(struct trapframe *tf, pid_t *retval)
     struct proc *new_proc;
     int result;
 
-    //TODO a make the name something different
     new_proc = proc_create_runprogram(curproc->p_name);
 
     KASSERT(new_proc != NULL);
@@ -66,7 +66,8 @@ fork(struct trapframe *tf, pid_t *retval)
         proc_destroy(new_proc); 
         return result;
     }
-    new_proc->p_parent_pid = curproc->p_parent_pid;
+
+    new_proc->p_parent_pid = curproc->p_pid;
     *retval = new_proc->p_pid;
     return 0;
 }
@@ -154,17 +155,51 @@ child_entry(void *vtf, unsigned long junk)
 //			  stackptr, entrypoint);
 //}
 
-/*
+
 int
-waitpid(pid_t pid, int *status, int options, pid_t *retval)
+waitpid(pid_t pid, int *status, pid_t *retval)
 {
+    struct proc* waitproc;
+
+    if(curproc->p_pid == pid)
+        return EINVAL;
+
+    if(pid > PID_MAX || pid < 0)
+        return EINVAL;
+
+   // if (options != 0 && options != WNOHANG)
+   //     return EINVAL;
+
+    waitproc = get_proc(pid);
+    if (waitproc == NULL)
+        return ESRCH;
+
+   lock_acquire(waitproc->p_waitlock);
+   if(waitproc->p_parent_pid != curproc->p_pid){
+        lock_release(waitproc->p_waitlock);
+        return EPERM;
+   }
+
+    while(waitproc->p_exited == 0){
+        cv_wait(waitproc->p_cv, waitproc->p_waitlock);  
+    }
+
+    // TODO handle case where child does not exit
+    *status = _MKWAIT_EXIT(waitproc->p_exit_code); 
+    *retval = pid;
+
+    lock_release(waitproc->p_waitlock);
+
     return 0;
 }
-*/
+
 void
 _exit(int exitcode)
 {
-    curproc->p_exit_status = 1;
+    lock_acquire(curproc->p_waitlock);
+    curproc->p_exited = 1;
     curproc->p_exit_code = exitcode;
+    cv_signal(curproc->p_cv, curproc->p_waitlock);  
+    lock_release(curproc->p_waitlock);
     thread_exit();
 }
