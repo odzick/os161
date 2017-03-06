@@ -131,11 +131,9 @@ waitpid(pid_t pid, int *status, int option, pid_t *retval, int from_user)
     }
 
     *retval = pid;
-    proc_remove_pidtable(pid);
 
     lock_release(waitproc->p_waitlock);
 
-    proc_destroy(waitproc);
     return 0;
 }
 

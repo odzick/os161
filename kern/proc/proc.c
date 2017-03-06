@@ -87,6 +87,7 @@ proc_create(const char *name)
     proc->p_waitlock = lock_create("procwait_lock");
     proc->p_filetable = ft_create();
     proc->p_exited = 0;
+    proc->p_threadexited = 0;
 
 	/* VM fields */
 	proc->p_addrspace = NULL;
@@ -137,7 +138,7 @@ proc_cleanup_pidtable()
     for(i = 0; i < table_size; i++){
         current_proc = procarray_get(&proc_table, i); 
         if( current_proc != NULL){
-            if(current_proc->p_exited == 1){
+            if(current_proc->p_exited == 1 && current_proc->p_threadexited){
                 proc_remove_pidtable(i);
                 proc_destroy(current_proc);
             }
@@ -230,7 +231,7 @@ proc_destroy(struct proc *proc)
 		as_destroy(as);
 	}
 
-	threadarray_cleanup(&proc->p_threads);
+    threadarray_cleanup(&proc->p_threads);
 	spinlock_cleanup(&proc->p_lock);
     ft_destroy(proc->p_filetable);
     cv_destroy(proc->p_cv);
@@ -354,6 +355,7 @@ proc_remthread(struct thread *t)
 	for (i=0; i<num; i++) {
 		if (threadarray_get(&proc->p_threads, i) == t) {
 			threadarray_remove(&proc->p_threads, i);
+            proc->p_threadexited = 1;
 			spinlock_release(&proc->p_lock);
 			spl = splhigh();
 			t->t_proc = NULL;
