@@ -131,7 +131,6 @@ waitpid(pid_t pid, int *status, int option, pid_t *retval, int from_user)
     }
 
     *retval = pid;
-
     lock_release(waitproc->p_waitlock);
 
     return 0;

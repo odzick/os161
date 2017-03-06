@@ -147,7 +147,8 @@ proc_cleanup_pidtable()
 }
 
 struct proc *
-get_proc(unsigned int pid){
+get_proc(unsigned int pid)
+{
     return procarray_get(&proc_table, pid);
 }
 
