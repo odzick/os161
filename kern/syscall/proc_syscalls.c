@@ -171,6 +171,8 @@ int execv(const char *program, char **args)
         kfree(testargs);
         return EFAULT;
     }
+    
+    kfree(testargs);
 
     int argc = 0;
     while(args[argc] != NULL){
@@ -182,6 +184,18 @@ int execv(const char *program, char **args)
     i = 0;
     // Copy arguments to kernel
     while (args[i] != NULL) {
+    
+        char **testcurrarg = (char **) kmalloc(sizeof(char**));
+        result = copyin((const_userptr_t) args[i], testcurrarg, sizeof(char **));
+        if (result){
+            kfree(kernbuf);
+            kfree(testcurrarg);
+            kfree(kernargs);
+            return EFAULT;
+        }
+        
+        kfree(testcurrarg);
+          
         kernargs[i] = (char *) kmalloc(strlen((char*)args[i]) + 1) ;
         result = copyinstr((const_userptr_t) args[i], kernargs[i], 
                             (strlen((char*)args[i]) + 1), &size);
