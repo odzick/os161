@@ -152,13 +152,6 @@ int execv(const char *program, char **args)
 	
 	if (program == NULL || args == NULL)
 	    return EFAULT;
-	
-	int argc = 0;
-	
-	while(args[argc] != NULL)
-	    argc++;
-	    
-    //lock_acquire(execlock);
         
     kernbuf = (char *)kmalloc(PATH_MAX*sizeof(char));
     if (kernbuf == NULL)
@@ -182,7 +175,7 @@ int execv(const char *program, char **args)
     i = 0;
     // Copy arguments to kernel
     while (args[i] != NULL) {
-        kernargs[i] = (char *) kmalloc(sizeof(char) * PATH_MAX);
+        kernargs[i] = (char *) kmalloc(strlen((char*)args[i]) + 1) ;
         result = copyinstr((const_userptr_t) args[i], kernargs[i], 
                             PATH_MAX, &size);
         if (result) {
@@ -203,6 +196,7 @@ int execv(const char *program, char **args)
     }
     
     /* Save old address space in case of load_elf error*/
+    old_as = kmalloc(sizeof(struct addrspace));
     old_as = curproc->p_addrspace;   
     
     /* Create a new address space. */
@@ -292,14 +286,13 @@ int execv(const char *program, char **args)
 	    }        
 	}
 	
-	
 	kfree(kernbuf);
     kfree(kernargs);
     
     lock_release(execlock);
 	
 	/* Warp to user mode. */
-	enter_new_process(argc, (userptr_t) stackptr,
+	enter_new_process(j, (userptr_t) stackptr,
 			  NULL /*userspace addr of environment*/,
 			  stackptr, entrypoint);
     return EINVAL;
