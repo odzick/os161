@@ -138,7 +138,7 @@ proc_cleanup_pidtable()
     for(i = 0; i < table_size; i++){
         current_proc = procarray_get(&proc_table, i); 
         if( current_proc != NULL){
-            if(current_proc->p_exited == 1 && current_proc->p_threadexited){
+            if(current_proc->p_exited == 1 && current_proc->p_threadexited == 1){
                 proc_remove_pidtable(i);
                 proc_destroy(current_proc);
             }
@@ -233,13 +233,13 @@ proc_destroy(struct proc *proc)
 	}
 
     threadarray_cleanup(&proc->p_threads);
-	spinlock_cleanup(&proc->p_lock);
+    spinlock_cleanup(&proc->p_lock);
     ft_destroy(proc->p_filetable);
     cv_destroy(proc->p_cv);
     lock_destroy(proc->p_waitlock);
 
-	kfree(proc->p_name);
-	kfree(proc);
+    kfree(proc->p_name);
+    kfree(proc);
 }
 
 /*
@@ -355,12 +355,12 @@ proc_remthread(struct thread *t)
 	num = threadarray_num(&proc->p_threads);
 	for (i=0; i<num; i++) {
 		if (threadarray_get(&proc->p_threads, i) == t) {
-			threadarray_remove(&proc->p_threads, i);
+            threadarray_remove(&proc->p_threads, i);
             proc->p_threadexited = 1;
-			spinlock_release(&proc->p_lock);
-			spl = splhigh();
-			t->t_proc = NULL;
-			splx(spl);
+            spinlock_release(&proc->p_lock);
+            spl = splhigh();
+            t->t_proc = NULL;
+            splx(spl);
 			return;
 		}
 	}

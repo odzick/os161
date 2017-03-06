@@ -52,20 +52,20 @@ struct lock *execlock;
  * Process structure.
  */
 struct proc {
-	char *p_name;			/* Name of this process */
+    char *p_name;			/* Name of this process */
     pid_t p_pid;            /* this processes pid */
     pid_t p_parent_pid;
     int p_exit_code;
     int p_exited;
     int p_threadexited;
-	struct spinlock p_lock;		/* Lock for this structure */
-	struct threadarray p_threads;	/* Threads in this process */
+    struct spinlock p_lock;		/* Lock for this structure */
+    struct threadarray p_threads;	/* Threads in this process */
 
-	/* VM */
-	struct addrspace *p_addrspace;	/* virtual address space */
+    /* VM */
+    struct addrspace *p_addrspace;	/* virtual address space */
 
-	/* VFS */
-	struct vnode *p_cwd;		/* current working directory */
+    /* VFS */
+    struct vnode *p_cwd;		/* current working directory */
 
     struct filetable *p_filetable; /* current working filetable */
     struct cv *p_cv; /* used when parent process waits */
