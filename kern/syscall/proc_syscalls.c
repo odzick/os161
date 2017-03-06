@@ -257,9 +257,7 @@ int execv(const char *program, char **args)
 		return result;
 	}
 	
-	j = 0;
-	
-	while(kernargs[j] != NULL){
+	for (j = 0; j < argc; j++){
 	    // Create len and round up to nearest multiple of 4
 	    char * currarg;
 	    len = strlen(kernargs[j]) + 1; // Add 1 for the '\0' char
@@ -270,14 +268,6 @@ int execv(const char *program, char **args)
 	        
 	    currarg = kmalloc(sizeof(len));
 	    currarg = kstrdup(kernargs[j]);
-	    /*
-	    for (int i = 0; i < len; i++){
-	        if (i >= origlen)
-	            currarg[i] = '\0';
-	        else
-	            currarg[i] = kernargs[j][i];
-	    }*/
-	    
 	    stackptr -= len;
 	    
 	    result = copyout((const void *) currarg, (userptr_t) stackptr, 
@@ -291,12 +281,9 @@ int execv(const char *program, char **args)
 	    
 	    kernargs[j] = (char *) stackptr;
 	    kfree(currarg);
-	    j++;
 	}
 	
-	
-	if (kernargs[j] == NULL)
-	   stackptr -= 4 * sizeof(char);
+	stackptr -= 4 * sizeof(char);
 	
 	for (int i = (j - 1); i >= 0; i--){
 	    stackptr -= sizeof(char*);
