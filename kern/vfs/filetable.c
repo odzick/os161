@@ -51,6 +51,19 @@ ft_init(struct filetable *ft)
 void
 ft_destroy(struct filetable* ft)
 {
+    int i;
+
+    lock_acquire(ft->ft_lock);
+    for(i = 0; i < OPEN_MAX; i++){
+        if(ft->files[i] != NULL){
+            if(ft->files[i]->file_refcount == 1){
+                file_destroy(ft->files[i]);
+            }else{
+                ft->files[i]->file_refcount--; 
+            }
+        }    
+    }
+    lock_release(ft->ft_lock);
     lock_destroy(ft->ft_lock);
     kfree(ft);
 }
@@ -58,8 +71,8 @@ ft_destroy(struct filetable* ft)
 int
 ft_add(struct filetable* ft, struct file* file, int* fd) 
 {
-   int i;
-    
+    int i;
+
     lock_acquire(ft->ft_lock);
     for(i = 0; i < OPEN_MAX; i++){
         if(ft->files[i] == NULL){

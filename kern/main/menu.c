@@ -154,10 +154,7 @@ common_prog(int nargs, char **args)
         return result;
     }
 
-	/*
-	 * The new process will be destroyed when the program exits...
-	 * once you write the code for handling that.
-	 */
+    proc_cleanup_pidtable();
 
 	return 0;
 }
