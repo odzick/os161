@@ -163,15 +163,22 @@ int execv(const char *program, char **args)
         return result;
     }
     
-    char **kernargs = (char **) kmalloc(sizeof(char**));
+    char **testargs = (char **) kmalloc(sizeof(char**));
     
-    result = copyin((const_userptr_t) args, kernargs, sizeof(char **));
+    result = copyin((const_userptr_t) args, testargs, sizeof(char **));
     if (result){
         kfree(kernbuf);
-        kfree(kernargs);
+        kfree(testargs);
         return EFAULT;
     }
+
+    int argc = 0;
+    while(args[argc] != NULL){
+        argc++;
+    }
     
+    char **kernargs = (char **) kmalloc(sizeof(char*) * argc);
+
     i = 0;
     // Copy arguments to kernel
     while (args[i] != NULL) {
@@ -198,8 +205,7 @@ int execv(const char *program, char **args)
     }
     
     /* Save old address space in case of load_elf error*/
-    old_as = kmalloc(sizeof(struct addrspace));
-    old_as = curproc->p_addrspace;   
+    old_as = proc_getas();   
     
     /* Create a new address space. */
 	new_as = as_create();
@@ -219,7 +225,7 @@ int execv(const char *program, char **args)
 		/* p_addrspace will go away when curproc is destroyed */
 		kfree(kernbuf);
         kfree(kernargs);
-        curproc->p_addrspace = old_as;
+        proc_setas(old_as);
         as_activate();
 		vfs_close(v);
 		return result;
