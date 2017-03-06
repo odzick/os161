@@ -177,7 +177,7 @@ int execv(const char *program, char **args)
     while (args[i] != NULL) {
         kernargs[i] = (char *) kmalloc(strlen((char*)args[i]) + 1) ;
         result = copyinstr((const_userptr_t) args[i], kernargs[i], 
-                            PATH_MAX, &size);
+                            (strlen((char*)args[i]) + 1), &size);
         if (result) {
             kfree(kernbuf);
             kfree(kernargs);
@@ -185,6 +185,8 @@ int execv(const char *program, char **args)
         }
         i++;
     }
+    
+    kernargs[i] = NULL;
     
     lock_acquire(execlock);
         
@@ -242,19 +244,19 @@ int execv(const char *program, char **args)
 	    char * currarg;
 	    len = strlen(kernargs[j]) + 1; // Add 1 for the '\0' char
 	    
-	    int origlen = len;
+	    //int origlen = len;
 	    if (len % 4 != 0)
-	        len = len + (4 - len % 4);
+	       len = len + (4 - len % 4);
 	        
 	    currarg = kmalloc(sizeof(len));
 	    currarg = kstrdup(kernargs[j]);
-	    
+	    /*
 	    for (int i = 0; i < len; i++){
 	        if (i >= origlen)
 	            currarg[i] = '\0';
 	        else
 	            currarg[i] = kernargs[j][i];
-	    }
+	    }*/
 	    
 	    stackptr -= len;
 	    
@@ -277,8 +279,8 @@ int execv(const char *program, char **args)
 	   stackptr -= 4 * sizeof(char);
 	
 	for (int i = (j - 1); i >= 0; i--){
-	    stackptr = stackptr - sizeof(char*);
-	    result = copyout((const void *) (kernargs + i), (userptr_t) stackptr, (sizeof(char*)));
+	    stackptr -= sizeof(char*);
+	    result = copyout((const void *) &(kernargs[i]), (userptr_t) stackptr, (sizeof(char*)));
 	    if (result) {
 		    kfree(kernbuf);
             kfree(kernargs);
