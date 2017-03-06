@@ -100,4 +100,6 @@ int proc_add_pidtable(struct proc *);
 struct proc *get_proc(unsigned int pid);
 
 void proc_remove_pidtable(unsigned int index);
+
+void proc_cleanup_pidtable(void);
 #endif /* _PROC_H_ */

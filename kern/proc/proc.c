@@ -100,31 +100,49 @@ proc_create(const char *name)
 int
 proc_add_pidtable(struct proc* p)
 {
-   unsigned int current_pid;
-   int i;
-   int table_size = procarray_num(&proc_table); 
+    unsigned int current_pid;
+    int i;
+    int table_size = procarray_num(&proc_table); 
 
-   for(i = 0; i < table_size; i++){
-       if( procarray_get(&proc_table, i) == NULL){
-           procarray_set(&proc_table, i, p); 
-           p->p_pid = i;
-           return 0;
-       }
-   } 
+    for(i = 0; i < table_size; i++){
+        if( procarray_get(&proc_table, i) == NULL){
+            procarray_set(&proc_table, i, p); 
+            p->p_pid = i;
+            return 0;
+        }
+    } 
 
-   if(table_size >= PID_MAX){
-       return ENOMEM;
-   }
+    if(table_size >= PID_MAX){
+        return ENOMEM;
+    }
 
-   procarray_add(&proc_table, p, &current_pid);
-   p->p_pid = current_pid;
-   return 0;
+    procarray_add(&proc_table, p, &current_pid);
+    p->p_pid = current_pid;
+    return 0;
 }
 
 void
 proc_remove_pidtable(unsigned int index)
 {
-   procarray_set(&proc_table, index, NULL); 
+    procarray_set(&proc_table, index, NULL); 
+}
+
+void
+proc_cleanup_pidtable()
+{
+    int i;
+    struct proc *current_proc;
+    int table_size = procarray_num(&proc_table); 
+
+    for(i = 0; i < table_size; i++){
+        current_proc = procarray_get(&proc_table, i); 
+        if( current_proc != NULL){
+            if(current_proc->p_exited == 1){
+                proc_remove_pidtable(i);
+                proc_destroy(current_proc);
+            }
+        }
+    }    
 }
 
 struct proc *
@@ -233,6 +251,7 @@ proc_bootstrap(void)
 		panic("proc_create for kproc failed\n");
 	}
 
+	procarray_init(&proc_table);
     execlock = lock_create("execv lock");
 }
 
