@@ -352,21 +352,21 @@ proc_remthread(struct thread *t)
 
 	spinlock_acquire(&proc->p_lock);
 	/* ugh: find the thread in the array */
-	num = threadarray_num(&proc->p_threads);
-	for (i=0; i<num; i++) {
-		if (threadarray_get(&proc->p_threads, i) == t) {
+    num = threadarray_num(&proc->p_threads);
+    for (i=0; i<num; i++) {
+        if (threadarray_get(&proc->p_threads, i) == t) {
             threadarray_remove(&proc->p_threads, i);
             proc->p_threadexited = 1;
             spinlock_release(&proc->p_lock);
             spl = splhigh();
             t->t_proc = NULL;
             splx(spl);
-			return;
-		}
-	}
-	/* Did not find it. */
-	spinlock_release(&proc->p_lock);
-	panic("Thread (%p) has escaped from its process (%p)\n", t, proc);
+            return;
+        }
+    }
+    /* Did not find it. */
+    spinlock_release(&proc->p_lock);
+    panic("Thread (%p) has escaped from its process (%p)\n", t, proc);
 }
 
 /*
