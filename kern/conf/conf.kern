@@ -462,3 +462,10 @@ file        syscall/file_syscalls.c
 #                                      #
 ########################################
 file        syscall/proc_syscalls.c
+
+########################################
+#                                      #
+#           ADDED for ASST6            #
+#                                      #
+########################################
+file        arch/mips/vm/coremap.c
