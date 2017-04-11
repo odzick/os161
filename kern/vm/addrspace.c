@@ -89,16 +89,16 @@ as_destroy(struct addrspace *as)
 void
 as_activate(void)
 {
-	struct addrspace *as;
+//	struct addrspace *as;
 
-	as = curproc_getas();
-	if (as == NULL) {
+//	as = curproc_getas();
+//	if (as == NULL) {
 		/*
 		 * Kernel thread without an address space; leave the
 		 * prior address space in place.
 		 */
 		return;
-	}
+//	}
 
 	/*
 	 * Write this.
@@ -139,7 +139,7 @@ as_define_region(struct addrspace *as, vaddr_t vaddr, size_t sz,
 	(void)readable;
 	(void)writeable;
 	(void)executable;
-	return EUNIMP;
+	return ENOSYS;
 }
 
 int
