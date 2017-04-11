@@ -31,7 +31,7 @@ cm_bootstrap(void)
     KASSERT((first & PAGE_FRAME) == first);
     KASSERT((last & PAGE_FRAME) == last);
 
-    npages = (last - first) / PAGE_SIZE;
+    npages = last / PAGE_SIZE;
 
     cm_size = ROUNDUP(npages * sizeof(struct cm_entry), PAGE_SIZE);
     KASSERT((cm_size & PAGE_FRAME) == cm_size);
@@ -46,10 +46,14 @@ cm_bootstrap(void)
 
     /*initialize entries*/
     for(i = 0; i < cm_entries; i++){
-        coremap[i].paddr = first + (i * PAGE_SIZE);
+        coremap[i].paddr = (i * PAGE_SIZE);
         coremap[i].free = 1;
         coremap[i].block_len = -1;
     }
+
+    /*add already used mem to coremap*/
+    for(i = 0; coremap[i].paddr < first; i++)
+        coremap[i].free = 0;
 }
 
 paddr_t
