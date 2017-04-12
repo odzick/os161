@@ -73,17 +73,20 @@ getppages(unsigned long npages)
             count++;
         else
             count = 0;
-        
+
         if(count == npages){
             coremap[i - npages + 1].block_len = npages;
             for (j = i - npages + 1; j <= i; j++) {
                 coremap[j].free = 0;
             }
-                if(cm_lock != NULL)
-                    lock_release(cm_lock);
-                return coremap[i - npages + 1].paddr;
+
+            if(cm_lock != NULL)
+                lock_release(cm_lock);
+
+            return coremap[i - npages + 1].paddr;
         }
     }
+
     if(cm_lock != NULL)
         lock_release(cm_lock);
     /* no contiguous npages found*/
@@ -100,12 +103,12 @@ releaseppages(paddr_t paddr)
     lock_acquire(cm_lock);
 
     for (i = 0; coremap[i].paddr != paddr; i++);
-        
+
     KASSERT(coremap[i].block_len != -1);
-        
+
     for (j = 0; j < coremap[i].block_len; j++)
         coremap[i + j].free = 1;
-        
+
     coremap[i].block_len = -1;
 
     lock_release(cm_lock);
