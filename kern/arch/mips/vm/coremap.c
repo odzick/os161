@@ -65,6 +65,7 @@ getppages(unsigned long npages)
     if(npages < 1)
         return 0;
 
+    /* need this check since first kmalloc is for cm_lock */
     if(cm_lock != NULL)
         lock_acquire(cm_lock);
 
