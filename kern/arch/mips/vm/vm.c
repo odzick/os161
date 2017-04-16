@@ -25,7 +25,6 @@ void
 vm_bootstrap(void)
 {
     cm_bootstrap();
-    pt_bootstrap();
     cm_lock = lock_create("coremap_lock");
 }
 
