@@ -12,17 +12,20 @@
 
 struct pt_entry {
    paddr_t paddr;
-   int virtual_page_num;
-   int physical_page_num;
+   vaddr_t virtual_page_num;
+   /* physical page number equivalent to starting address of page */
+   paddr_t physical_page_num;
    mode_t permission;
    int state;
-   int referenced;
+   /* Implemented later to handle swapping */
+   int ref;
 };
 
 void
 vm_bootstrap(void)
 {
     cm_bootstrap();
+    pt_bootstrap();
     cm_lock = lock_create("coremap_lock");
 }
 
