@@ -30,6 +30,7 @@
 #include <types.h>
 #include <kern/errno.h>
 #include <lib.h>
+#include <current.h>
 #include <addrspace.h>
 #include <vm.h>
 
@@ -89,17 +90,6 @@ as_destroy(struct addrspace *as)
 void
 as_activate(void)
 {
-//	struct addrspace *as;
-
-//	as = curproc_getas();
-//	if (as == NULL) {
-		/*
-		 * Kernel thread without an address space; leave the
-		 * prior address space in place.
-		 */
-		return;
-//	}
-
 	/*
 	 * Write this.
 	 */
