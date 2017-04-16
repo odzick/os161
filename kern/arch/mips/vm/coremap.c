@@ -36,7 +36,7 @@ cm_bootstrap(void)
     cm_size = ROUNDUP(npages * sizeof(struct cm_entry), PAGE_SIZE);
     KASSERT((cm_size & PAGE_FRAME) == cm_size);
 
-    /*steal pages for coremap*/
+    /* steal pages for coremap */
     coremap = (struct cm_entry *) PADDR_TO_KVADDR(first);
     first += cm_size;
     KASSERT(first < last);
@@ -44,14 +44,14 @@ cm_bootstrap(void)
     cm_basepage = first / PAGE_SIZE;
     cm_entries = npages;
 
-    /*initialize entries*/
+    /* initialize entries */
     for(i = 0; i < cm_entries; i++){
         coremap[i].paddr = (i * PAGE_SIZE);
         coremap[i].free = 1;
         coremap[i].block_len = -1;
     }
 
-    /*add already used mem to coremap*/
+    /* add already used mem to coremap */
     for(i = 0; coremap[i].paddr < first; i++)
         coremap[i].free = 0;
 }
@@ -74,7 +74,8 @@ getppages(unsigned long npages)
             count++;
         else
             count = 0;
-
+        
+        /* Set coremap entries */
         if(count == npages){
             coremap[i - npages + 1].block_len = npages;
             for (j = i - npages + 1; j <= i; j++) {
@@ -90,7 +91,8 @@ getppages(unsigned long npages)
 
     if(cm_lock != NULL)
         lock_release(cm_lock);
-    /* no contiguous npages found*/
+        
+    /* no contiguous npages found */
     return 0; 
 }
 
@@ -107,6 +109,7 @@ releaseppages(paddr_t paddr)
 
     KASSERT(coremap[i].block_len != -1);
 
+    /* Reset coremap[i] entries */
     for (j = 0; j < coremap[i].block_len; j++)
         coremap[i + j].free = 1;
 
