@@ -10,6 +10,15 @@
 #include <addrspace.h>
 #include <vm.h>
 
+struct pt_entry {
+   paddr_t paddr;
+   int virtual_page_num;
+   int physical_page_num;
+   mode_t permission;
+   int state;
+   int referenced;
+};
+
 void
 vm_bootstrap(void)
 {
